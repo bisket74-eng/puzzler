@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
+  <meta name="theme-color" content="#315f56" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>Puzzler</title>
+  <link rel="manifest" href="./manifest.json" />
+  <style>
+    :root{
+      --bg:#f4f7f5;
+      --card:#ffffff;
+      --ink:#20302c;
+      --muted:#687a75;
+      --line:#dbe5e1;
+      --accent:#315f56;
+      --accent-dark:#244840;
+      --accent-soft:#dfeee9;
+      --gold:#d29a3a;
+      --danger:#a94242;
+      --good:#28734f;
+      --shadow:0 10px 30px rgba(34,65,57,.10);
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    body{padding-bottom:max(24px,env(safe-area-inset-bottom))}
+    button,input,select{font:inherit}
+    button{cursor:pointer}
+    .app{max-width:760px;margin:0 auto;min-height:100vh}
+    .topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(12px + env(safe-area-inset-top)) 14px 12px;background:rgba(244,247,245,.94);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+    .brand{display:flex;align-items:center;gap:10px;min-width:0}
+    .logo{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:var(--accent);color:white;font-size:23px;box-shadow:var(--shadow)}
+    .brand h1{font-size:20px;line-height:1;margin:0}
+    .brand small{display:block;color:var(--muted);margin-top:4px}
+    .header-actions{display:flex;gap:8px}
+    .icon-btn,.small-btn,.primary-btn,.soft-btn,.danger-btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:13px;min-height:44px;padding:9px 13px;font-weight:750;box-shadow:0 3px 12px rgba(34,65,57,.06)}
+    .icon-btn{width:44px;padding:0;font-size:20px}
+    .primary-btn{background:var(--accent);border-color:var(--accent);color:#fff}
+    .primary-btn:active{background:var(--accent-dark)}
+    .soft-btn{background:var(--accent-soft);border-color:#c8ded6;color:var(--accent-dark)}
+    .danger-btn{color:var(--danger);background:#fff5f5;border-color:#edd1d1}
+    .screen{display:none;padding:16px}
+    .screen.active{display:block}
+    .hero{background:linear-gradient(145deg,#315f56,#4a8074);color:white;border-radius:24px;padding:20px;box-shadow:var(--shadow);margin-bottom:16px}
+    .hero h2{font-size:26px;margin:0 0 8px}
+    .hero p{margin:0;line-height:1.45;color:#eff8f5}
+    .hero-row{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:16px;flex-wrap:wrap}
+    .difficulty{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);padding:8px 10px;border-radius:14px}
+    .difficulty select{border:0;border-radius:9px;padding:6px 8px;background:white;color:var(--ink);font-weight:750}
+    .stat-pill{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);padding:9px 12px;border-radius:999px;font-weight:750}
+    .section-title{display:flex;justify-content:space-between;align-items:end;gap:10px;margin:20px 2px 10px}
+    .section-title h3{margin:0;font-size:18px}
+    .section-title span{font-size:13px;color:var(--muted)}
+    .game-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .game-card{border:1px solid var(--line);background:var(--card);border-radius:20px;padding:15px;text-align:left;box-shadow:0 5px 18px rgba(34,65,57,.07);min-height:132px;display:flex;flex-direction:column;justify-content:space-between}
+    .game-card:active{transform:scale(.985)}
+    .game-icon{font-size:30px}
+    .game-card h4{margin:8px 0 3px;font-size:17px}
+    .game-card p{margin:0;color:var(--muted);font-size:13px;line-height:1.35}
+    .game-meta{display:flex;justify-content:space-between;align-items:center;margin-top:10px;color:var(--accent);font-size:12px;font-weight:800}
+    .footer-note{margin:20px 4px 4px;color:var(--muted);font-size:12px;line-height:1.45;text-align:center}
+    .footer-note a{color:var(--accent)}
+
+    .play-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+    .play-title{min-width:0;flex:1}
+    .play-title h2{font-size:21px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .play-title p{font-size:13px;color:var(--muted);margin:3px 0 0}
+    .tool-row{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}
+    .tool-row::-webkit-scrollbar{display:none}
+    .tool-row button,.tool-row select{flex:0 0 auto}
+    .tool-row select{min-height:44px;border:1px solid var(--line);background:white;border-radius:13px;padding:8px 11px;font-weight:750;color:var(--ink)}
+    .game-panel{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:14px;box-shadow:var(--shadow);overflow:hidden}
+    .status{min-height:24px;margin:10px 4px 0;text-align:center;font-weight:750;color:var(--muted)}
+    .status.good{color:var(--good)}
+    .status.bad{color:var(--danger)}
+    .board-stage{margin-top:10px}
+    .board-viewport{position:relative;width:100%;height:clamp(240px,72vw,540px);border:1px solid var(--line);border-radius:18px;background:#f8fbfa;overflow:hidden;touch-action:none}
+    .board-surface{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+    .control-grid{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px}
+    .control-grid button{min-width:48px;min-height:48px;border:1px solid var(--line);background:white;border-radius:13px;font-weight:850;font-size:18px}
+    .control-grid button.active{background:var(--accent);color:white;border-color:var(--accent)}
+    .helper-card{margin-top:12px;background:#f8fbfa;border:1px solid var(--line);border-radius:15px;padding:12px;line-height:1.4}
+    .helper-card strong{color:var(--accent-dark)}
+    .overlay{position:fixed;inset:0;z-index:60;background:rgba(19,35,31,.55);display:none;align-items:flex-end;justify-content:center;padding:16px}
+    .overlay.open{display:flex}
+    .sheet{width:min(100%,720px);max-height:80vh;overflow:auto;background:white;border-radius:24px;padding:18px;box-shadow:0 20px 80px rgba(0,0,0,.25)}
+    .sheet h3{margin:0 0 8px}.sheet p{line-height:1.45;color:var(--muted)}
+    .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));z-index:100;transform:translate(-50%,20px);opacity:0;pointer-events:none;background:#20302c;color:#fff;padding:11px 16px;border-radius:999px;font-weight:750;transition:.2s;max-width:90%;text-align:center}
+    .toast.show{opacity:1;transform:translate(-50%,0)}
+
+    /* Sudoku */
+    .sudoku{display:grid;grid-template-columns:repeat(9,1fr);width:520px;aspect-ratio:1;margin:auto;border:3px solid var(--ink);background:var(--ink);gap:1px}
+    .sudoku-cell{position:relative;display:grid;place-items:center;border:0;background:white;font-size:30px;font-weight:650;padding:0;min-width:34px}
+    .sudoku-cell:nth-child(3n){border-right:2px solid var(--ink)}
+    .sudoku-cell:nth-child(9n){border-right:0}
+    .sudoku-cell.block-bottom{border-bottom:2px solid var(--ink)}
+    .sudoku-cell.fixed{background:#eef3f1;font-weight:900;color:var(--ink)}
+    .sudoku-cell.selected{background:#dcefe8;outline:3px solid var(--accent);z-index:2}
+    .sudoku-cell.related{background:#f2f8f6}
+    .sudoku-cell.wrong{color:var(--danger);background:#fff0f0}
+
+    /* Word search */
+    .word-grid{display:grid;gap:3px;margin:auto;width:max-content;padding:4px;user-select:none}
+    .word-cell{width:34px;height:34px;border:1px solid #d5e0dc;background:#fff;border-radius:7px;font-weight:850;font-size:16px;padding:0}
+    .word-cell.trace{background:#ffe9a9;border-color:#d9ad43}
+    .word-cell.found{background:#cfeada;border-color:#6aaf8a;color:#174d36}
+    .word-list{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-top:12px}
+    .word-chip{padding:6px 9px;border-radius:999px;background:#eef4f2;border:1px solid var(--line);font-weight:750;font-size:13px}
+    .word-chip.found{text-decoration:line-through;color:var(--muted);background:#e4f3ea}
+
+    /* Maze */
+    #mazeCanvas{display:block;width:700px;height:700px;max-width:none;margin:auto;background:white;touch-action:none;border-radius:10px}
+    .maze-pad{display:grid;grid-template-columns:repeat(3,58px);grid-template-rows:repeat(2,58px);gap:7px;justify-content:center;margin-top:14px}
+    .maze-pad button{border:1px solid var(--line);background:white;border-radius:15px;font-size:24px;font-weight:900}
+    .maze-pad .up{grid-column:2}.maze-pad .left{grid-column:1;grid-row:2}.maze-pad .down{grid-column:2;grid-row:2}.maze-pad .right{grid-column:3;grid-row:2}
+
+    /* Scramble/riddle/trivia */
+    .prompt-card{padding:18px;border-radius:18px;background:#f6faf8;border:1px solid var(--line);text-align:center}
+    .prompt-card .big{font-size:clamp(27px,8vw,42px);letter-spacing:5px;font-weight:900;color:var(--accent-dark);word-break:break-word}
+    .prompt-card .question{font-size:20px;line-height:1.45;font-weight:750}
+    .answer-input{display:block;width:100%;min-height:52px;margin-top:12px;border:2px solid var(--line);border-radius:14px;padding:10px 13px;font-size:20px;text-align:center;text-transform:uppercase}
+    .letter-tiles{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px}
+    .letter-tiles button{width:47px;height:50px;border:1px solid var(--line);border-radius:12px;background:#fff;font-size:20px;font-weight:900}
+    .choice-list{display:grid;gap:9px;margin-top:13px}
+    .choice{min-height:52px;border:1px solid var(--line);background:white;border-radius:14px;padding:11px 13px;text-align:left;font-weight:750}
+    .choice.correct{background:#def2e6;border-color:#73b891;color:#164c33}
+    .choice.incorrect{background:#fde4e4;border-color:#d38a8a;color:#7c2424}
+    .score-row{display:flex;justify-content:space-between;gap:8px;color:var(--muted);font-weight:750;margin-bottom:10px}
+
+    /* Crossword */
+    .crossword-wrap{display:flex;flex-direction:column;gap:14px}
+    .crossword{display:grid;gap:1px;background:#1f2c28;border:3px solid #1f2c28;width:max-content;margin:auto}
+    .cw-cell{position:relative;width:38px;height:38px;background:white}
+    .cw-cell.block{background:#1f2c28}
+    .cw-cell input{position:absolute;inset:0;width:100%;height:100%;border:0;background:transparent;text-align:center;text-transform:uppercase;font-size:22px;font-weight:850;padding:7px 0 0;outline:0}
+    .cw-cell.active{background:#d9eee6}
+    .cw-cell.word-active{background:#eef8f4}
+    .cw-cell.wrong{background:#ffe5e5}
+    .cw-num{position:absolute;left:2px;top:1px;font-size:9px;font-weight:850;z-index:2;pointer-events:none}
+    .clue-columns{display:grid;grid-template-columns:1fr;gap:10px}
+    .clue-box{border:1px solid var(--line);border-radius:14px;padding:10px;background:#fafcfb}
+    .clue-box h4{margin:0 0 7px;color:var(--accent-dark)}
+    .clue-item{padding:7px;border-radius:9px;font-size:14px;line-height:1.3}
+    .clue-item.active{background:var(--accent-soft);font-weight:750}
+
+    /* Cryptogram */
+    .crypto-quote{display:flex;flex-wrap:wrap;gap:8px 12px;justify-content:center;padding:12px 4px}
+    .crypto-word{display:flex;gap:2px}
+    .crypto-letter{width:29px;height:50px;border:0;background:transparent;padding:0;display:grid;grid-template-rows:28px 18px;place-items:center;border-bottom:2px solid var(--ink);border-radius:5px}
+    .crypto-letter .guess{font-size:19px;font-weight:900;color:var(--accent)}
+    .crypto-letter .cipher{font-size:12px;font-weight:800;color:var(--muted)}
+    .crypto-letter.selected{background:#dff1ea;outline:2px solid var(--accent)}
+    .crypto-punc{display:flex;align-items:end;padding-bottom:4px;font-weight:900}
+    .alpha-pad{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:13px}
+    .alpha-pad button{min-height:43px;border:1px solid var(--line);background:#fff;border-radius:10px;font-weight:850}
+
+    /* Logic */
+    .logic-clues{margin:0;padding-left:22px;line-height:1.55}
+    .logic-slots{display:grid;gap:9px;margin-top:14px}
+    .logic-slot{display:flex;align-items:center;gap:10px;min-height:54px;border:2px dashed #cddbd6;border-radius:14px;padding:8px 11px;background:#fbfdfc}
+    .logic-slot strong{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent-dark)}
+    .logic-slot.filled{border-style:solid;border-color:#9cc9b7}
+    .name-bank{display:flex;flex-wrap:wrap;gap:8px;margin-top:13px;justify-content:center}
+    .name-chip{min-height:45px;border:1px solid var(--line);background:white;border-radius:999px;padding:8px 15px;font-weight:800}
+    .name-chip.used{opacity:.35}
+    .name-chip.selected{background:var(--accent);color:white;border-color:var(--accent)}
+
+    /* Nonogram */
+    .nonogram-shell{display:grid;width:max-content;margin:auto;grid-template-columns:auto auto;grid-template-rows:auto auto;gap:3px}
+    .nono-corner{grid-column:1;grid-row:1}
+    .nono-col-clues{grid-column:2;grid-row:1;display:grid}
+    .nono-row-clues{grid-column:1;grid-row:2;display:grid}
+    .nono-grid{grid-column:2;grid-row:2;display:grid;gap:1px;background:#75827e;border:2px solid #75827e}
+    .nono-col-clue,.nono-row-clue{display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:850;color:var(--ink)}
+    .nono-col-clue{width:32px;min-height:46px;flex-direction:column;justify-content:end;padding-bottom:3px}
+    .nono-row-clue{height:32px;min-width:52px;justify-content:end;padding-right:5px;gap:3px}
+    .nono-cell{width:32px;height:32px;border:0;background:white;position:relative;padding:0}
+    .nono-cell.filled{background:var(--accent)}
+    .nono-cell.marked::before,.nono-cell.marked::after{content:"";position:absolute;left:5px;right:5px;top:15px;height:2px;background:#9aa7a3;transform:rotate(45deg)}
+    .nono-cell.marked::after{transform:rotate(-45deg)}
+    .nono-cell.wrong{outline:3px solid #d76b6b;z-index:2}
+
+    @media(min-width:620px){
+      .game-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+      .clue-columns{grid-template-columns:1fr 1fr}
+    }
+    @media(max-width:380px){
+      .screen{padding:12px}.game-grid{gap:9px}.game-card{padding:12px;min-height:124px}.word-cell{width:30px;height:30px}.cw-cell{width:34px;height:34px}
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">🧩</div>
+      <div><h1>Puzzler</h1><small>Fresh puzzles, made for your phone</small></div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="homeBtn" aria-label="Home" title="Home">⌂</button>
+      <button class="icon-btn" id="infoBtn" aria-label="About" title="About">?</button>
+    </div>
+  </header>
+
+  <main id="homeScreen" class="screen active">
+
+    <div class="section-title"><h3>Choose a puzzle</h3><span>Tap any room</span></div>
+    <div class="game-grid" id="gameGrid"></div>
+
+    <p class="footer-note">
+      Word expansion uses the <a href="https://www.datamuse.com/api/" target="_blank" rel="noopener">Datamuse API</a> when online.
+      Trivia uses <a href="https://opentdb.com/" target="_blank" rel="noopener">Open Trivia DB</a> under CC BY-SA 4.0.
+      Every game also has an offline fallback.
+    </p>
+  </main>
+
+  <main id="playScreen" class="screen">
+    <div class="play-head">
+      <button class="icon-btn" id="backBtn" aria-label="Back">‹</button>
+      <div class="play-title"><h2 id="gameTitle">Puzzle</h2><p id="gameSubtitle">Freshly generated</p></div>
+    </div>
+    <div class="tool-row">
+      <select id="playDifficulty" aria-label="Difficulty">
+        <option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option>
+      </select>
+      <button class="primary-btn" id="newBtn">New puzzle</button>
+      <button class="small-btn" id="hintBtn">Hint</button>
+      <button class="small-btn" id="checkBtn">Check</button>
+    </div>
+    <section class="game-panel">
+      <div id="gameArea"></div>
+      <div id="extraControls"></div>
+      <div id="status" class="status"></div>
+    </section>
+  </main>
+</div>
+
+<div class="overlay" id="infoOverlay" role="dialog" aria-modal="true">
+  <div class="sheet">
+    <h3>Puzzler</h3>
+    <p>This first version makes puzzles directly in the browser. Sudoku, mazes, nonograms, cryptograms, logic lineups, and layouts are generated locally. Crosswords and word games can quietly add new vocabulary from Datamuse when online. Trivia loads batches from Open Trivia DB and keeps a local played-question history.</p>
+    <p>Each puzzle board starts zoomed all the way out so the full board fits like a page in a book. You can pinch inside the puzzle area to zoom that board, while the rest of the page scrolls normally. Progress and no-repeat history stay on this device.</p>
+    <button class="primary-btn" id="closeInfoBtn">Got it</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  "use strict";
+
+  const $ = (q, root=document) => root.querySelector(q);
+  const $$ = (q, root=document) => [...root.querySelectorAll(q)];
+  const STORAGE = {
+    difficulty: "puzzlerDifficulty",
+    history: "puzzlerHistoryV1",
+    stats: "puzzlerStatsV1",
+    wordCache: "puzzlerWordCacheV1",
+    triviaToken: "puzzlerTriviaTokenV1",
+    triviaSeen: "puzzlerTriviaSeenV1"
+  };
+
+  const GAMES = [
+    {id:"sudoku", icon:"🔢", title:"Sudoku", desc:"Classic number logic with touch keypad.", meta:"Endless generator"},
+    {id:"crossword", icon:"✚", title:"Crossword", desc:"Fresh mini crosswords with tap-to-type clues.", meta:"Online word boost"},
+    {id:"wordsearch", icon:"🔎", title:"Word Find", desc:"Drag through themed hidden words.", meta:"New layouts"},
+    {id:"maze", icon:"🌀", title:"Mazes", desc:"Swipe or use arrows to reach the flag.", meta:"Perfect mazes"},
+    {id:"nonogram", icon:"▦", title:"Nonogram", desc:"Reveal a pixel picture from number clues.", meta:"Generated art"},
+    {id:"scramble", icon:"🔀", title:"Word Scramble", desc:"Unscramble words using clues and tiles.", meta:"Themed words"},
+    {id:"cryptogram", icon:"🔐", title:"Cryptogram", desc:"Crack a substitution cipher quote.", meta:"Fresh ciphers"},
+    {id:"logic", icon:"🧠", title:"Logic Lineup", desc:"Use clues to put everyone in order.", meta:"Unique solutions"},
+    {id:"riddle", icon:"💡", title:"Riddles", desc:"Hints, answer checking, and no-repeat play.", meta:"Clue variations"},
+    {id:"trivia", icon:"🏆", title:"Trivia", desc:"Categories, difficulty, streaks, and scores.", meta:"Thousands online"}
+  ];
+
+  const THEMES = {
+    nature:[
+      ["FOREST","A large area filled with trees"],["RIVER","Flowing natural water"],["MEADOW","An open grassy field"],["CANYON","A deep valley with steep sides"],["OCEAN","A vast body of salt water"],["THUNDER","The sound following lightning"],["BREEZE","A gentle wind"],["PEBBLE","A small smooth stone"],["SUNSET","The sun disappearing below the horizon"],["ISLAND","Land surrounded by water"],["VALLEY","Low land between hills"],["WILLOW","A tree with long flexible branches"],["CLOUD","A visible mass of water droplets in the sky"],["MOSS","A small green plant forming soft mats"],["TRAIL","A path through the outdoors"],["POND","A small body of still water"],["MAPLE","A tree known for winged seeds"],["CORAL","A hard sea structure made by tiny animals"]
+    ],
+    animals:[
+      ["OTTER","A playful swimming mammal"],["BADGER","A burrowing mammal with facial stripes"],["RABBIT","A long-eared hopping animal"],["FALCON","A fast bird of prey"],["TURTLE","A reptile with a shell"],["PANDA","A black-and-white bamboo eater"],["DOLPHIN","An intelligent ocean mammal"],["GECKO","A small climbing lizard"],["BISON","A large shaggy grazing animal"],["PARROT","A colorful bird that can mimic sounds"],["WOMBAT","A sturdy Australian marsupial"],["MOOSE","A large deer with broad antlers"],["LEMUR","A primate from Madagascar"],["PENGUIN","A flightless seabird"],["JAGUAR","A spotted big cat of the Americas"],["KOALA","A tree-dwelling Australian marsupial"]
+    ],
+    food:[
+      ["WAFFLE","A breakfast food with a grid pattern"],["NOODLE","A long thin strip of pasta"],["BISCUIT","A small baked bread"],["AVOCADO","A green fruit with a large pit"],["CINNAMON","A warm brown spice"],["PRETZEL","A twisted baked snack"],["MUFFIN","A small quick bread baked in a cup"],["PEPPER","A seasoning or crunchy vegetable"],["APRICOT","A small orange stone fruit"],["PANCAKE","A flat breakfast cake"],["COCONUT","A large tropical fruit with a hard shell"],["CHERRY","A small round red fruit"],["CHEDDAR","A popular firm cheese"],["BROWNIE","A dense chocolate square"],["SPINACH","A leafy green vegetable"],["TORTILLA","A thin flatbread"]
+    ],
+    travel:[
+      ["PASSPORT","A document used for international travel"],["TICKET","Proof of permission to ride or enter"],["COMPASS","A tool that points north"],["JOURNEY","The act of traveling from one place to another"],["SUITCASE","A travel container for clothing"],["STATION","A regular stopping place for trains or buses"],["HARBOR","A sheltered place for boats"],["BRIDGE","A structure carrying a path over an obstacle"],["VILLAGE","A small community"],["HIGHWAY","A major public road"],["TRAIL","A marked route or path"],["CABIN","A small simple house"],["MAP","A drawing showing locations"],["ROUTE","A chosen way from one place to another"],["VOYAGE","A long trip, often by sea"],["HOTEL","A place that rents rooms to travelers"]
+    ],
+    space:[
+      ["PLANET","A large body orbiting a star"],["COMET","An icy object that grows a tail near the sun"],["GALAXY","A huge collection of stars"],["ROCKET","A vehicle propelled by exhaust"],["ORBIT","A curved path around another object"],["NEBULA","A cloud of gas and dust in space"],["METEOR","A streak of light from a space rock"],["SATURN","The ringed planet"],["LUNAR","Relating to the moon"],["ASTEROID","A rocky body orbiting the sun"],["ECLIPSE","When one space body blocks another"],["COSMOS","The universe as an ordered whole"],["CRATER","A bowl-shaped hollow from an impact"],["GRAVITY","The force that pulls masses together"],["STARLIGHT","Light arriving from stars"]
+    ]
+  };
+
+  const RIDDLES = [
+    {a:"clock", q:["I have a face but no eyes.","I have hands but no fingers.","I measure what you cannot hold."], h:"You may look at me to see whether you are late."},
+    {a:"shadow", q:["I follow you without taking a step.","Bright light makes me appear.","Darkness makes me disappear."], h:"You can see me on the ground or a wall."},
+    {a:"echo", q:["I answer without understanding.","I repeat without remembering.","Mountains help me speak."], h:"Call out in a large empty place."},
+    {a:"pencil", q:["I grow shorter while doing my job.","I can make a mark and carry an eraser.","My center is called lead, though it is not metal."], h:"You might use me for a crossword."},
+    {a:"book", q:["I have many pages but no calendar.","I can take you places while staying still.","Open me to hear a silent voice."], h:"You may find me on a shelf."},
+    {a:"river", q:["I run but never need shoes.","I have a bed but never sleep.","I may meet the sea."], h:"Water travels through me."},
+    {a:"keyboard", q:["I have many keys but open no locks.","I help words appear without speaking.","My space is a bar."], h:"You may use me with a computer."},
+    {a:"towel", q:["The more I dry, the wetter I become.","I hang around after a shower.","I am soft but useful."], h:"You use me after washing."},
+    {a:"map", q:["I show roads but never drive.","I show towns but hold no houses.","I can guide you while staying flat."], h:"Travelers use me to choose a route."},
+    {a:"candle", q:["I stand tall when young and shrink with age.","A small flame is my bright idea.","A breath may end my work."], h:"Wax is part of me."},
+    {a:"mirror", q:["I copy you instantly but keep nothing.","I reverse what I show.","I have no memory of any face."], h:"You may look into me before leaving home."},
+    {a:"sponge", q:["I am full of holes yet hold water.","I get squeezed while cleaning.","I am light when dry."], h:"You may keep me near a sink."},
+    {a:"stairs", q:["You can go up me or down me.","I never travel, though I have many steps.","I connect different levels."], h:"I am often found inside a building."},
+    {a:"envelope", q:["I carry a message while saying nothing.","I may wear a stamp.","You open me by tearing or lifting a flap."], h:"Mail travels inside me."},
+    {a:"snowflake", q:["I fall without getting hurt.","No two of me are exactly alike.","Warm hands make me vanish."], h:"I arrive in cold weather."},
+    {a:"umbrella", q:["I open when the sky is gloomy.","I have ribs but no bones.","I help keep falling water away."], h:"You carry me in the rain."},
+    {a:"button", q:["I may fasten clothing or start a machine.","You can press me without making me flat.","I am small but can cause a big action."], h:"I may be on a shirt or a screen."},
+    {a:"window", q:["I let you see through a wall.","I can be opened without being a door.","Light often enters through me."], h:"Glass is usually part of me."},
+    {a:"battery", q:["I store energy but eat no food.","I can make a toy move.","When I am drained, devices slow or stop."], h:"Many flashlights need me."},
+    {a:"maze", q:["I am a path made to confuse you.","My wrong turns go nowhere.","Finding my exit is the whole point."], h:"You are playing one kind of me in this app."}
+  ];
+
+  const QUOTES = [
+    "SMALL STEPS CAN STILL CROSS A GREAT DISTANCE.",
+    "A CURIOUS MIND TURNS EVERY DAY INTO A DISCOVERY.",
+    "PATIENCE OFTEN FINDS THE DOOR THAT FORCE MISSES.",
+    "THE BEST PATH IS SOMETIMES THE ONE YOU DRAW YOURSELF.",
+    "A GOOD QUESTION CAN BE MORE USEFUL THAN A QUICK ANSWER.",
+    "CLEAR THINKING BEGINS WHEN WE SLOW DOWN ENOUGH TO NOTICE.",
+    "EVERY PUZZLE LOOKS DIFFERENT AFTER THE FIRST GOOD CLUE.",
+    "PRACTICE DOES NOT MAKE PERFECT BUT IT MAKES PROGRESS VISIBLE.",
+    "WHEN ONE PLAN FAILS A NEW IDEA GETS ROOM TO GROW.",
+    "A CALM MIND CAN HEAR THE QUIET PART OF A PROBLEM.",
+    "THE FINISH LINE IS EASIER TO FIND WHEN YOU ENJOY THE SEARCH.",
+    "BRAVE IDEAS OFTEN BEGIN AS SMALL UNLIKELY THOUGHTS."
+  ];
+
+  const FALLBACK_TRIVIA = [
+    {category:"General",difficulty:"easy",question:"How many sides does a hexagon have?",correct:"6",incorrect:["5","7","8"]},
+    {category:"Science",difficulty:"easy",question:"Which planet is known for its prominent rings?",correct:"Saturn",incorrect:["Mars","Venus","Mercury"]},
+    {category:"Geography",difficulty:"easy",question:"Which ocean borders the west coast of the United States?",correct:"Pacific Ocean",incorrect:["Atlantic Ocean","Indian Ocean","Arctic Ocean"]},
+    {category:"Animals",difficulty:"easy",question:"What is a group of lions called?",correct:"A pride",incorrect:["A school","A pack","A flock"]},
+    {category:"History",difficulty:"medium",question:"Which ancient civilization built Machu Picchu?",correct:"The Inca",incorrect:["The Maya","The Roman Empire","The Vikings"]},
+    {category:"Science",difficulty:"medium",question:"What is the chemical symbol for gold?",correct:"Au",incorrect:["Ag","Gd","Go"]},
+    {category:"Books",difficulty:"medium",question:"Who wrote Frankenstein?",correct:"Mary Shelley",incorrect:["Jane Austen","Louisa May Alcott","Emily Brontë"]},
+    {category:"Math",difficulty:"medium",question:"What is the square root of 144?",correct:"12",incorrect:["10","14","16"]},
+    {category:"Space",difficulty:"hard",question:"What is the name of the boundary around a black hole beyond which light cannot escape?",correct:"Event horizon",incorrect:["Photon belt","Gravity shell","Accretion edge"]},
+    {category:"Language",difficulty:"hard",question:"What is a word that reads the same forward and backward called?",correct:"Palindrome",incorrect:["Anagram","Homophone","Metaphor"]}
+  ];
+
+  const NAMES = ["Ava","Ben","Cora","Dylan","Ella","Finn","Gia","Hugo","Iris","Jude","Kira","Liam"];
+
+  let currentGame = null;
+  let currentState = null;
+  let boardView = null;
+  let toastTimer = null;
+
+  function loadJSON(key, fallback){
+    try{return JSON.parse(localStorage.getItem(key)) ?? fallback;}catch{return fallback;}
+  }
+  function saveJSON(key, value){try{localStorage.setItem(key, JSON.stringify(value));}catch{}}
+  function hashString(str){let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+  function mulberry32(seed){return function(){let t=seed+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
+  function randInt(rng,min,max){return Math.floor(rng()*(max-min+1))+min;}
+  function shuffle(arr,rng=Math.random){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+  function pick(arr,rng=Math.random){return arr[Math.floor(rng()*arr.length)];}
+  function cleanAnswer(s){return String(s||"").toLowerCase().replace(/[^a-z0-9]/g,"");}
+  function htmlDecode(s){const t=document.createElement("textarea");t.innerHTML=s;return t.value;}
+  function toast(msg){const el=$("#toast");el.textContent=msg;el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),2200);}
+  function setStatus(msg,type=""){const s=$("#status");s.textContent=msg;s.className="status"+(type?" "+type:"");}
+  function getDifficulty(){return $("#playDifficulty").value || localStorage.getItem(STORAGE.difficulty) || "medium";}
+  function recordPlayed(type,seed){
+    const history=loadJSON(STORAGE.history,{});history[type]=history[type]||[];history[type].push(seed);history[type]=history[type].slice(-500);saveJSON(STORAGE.history,history);
+    const stats=loadJSON(STORAGE.stats,{played:0,completed:0});stats.played++;saveJSON(STORAGE.stats,stats);updateStats();
+  }
+  function recordCompleted(){const stats=loadJSON(STORAGE.stats,{played:0,completed:0});stats.completed++;saveJSON(STORAGE.stats,stats);updateStats();}
+  function uniqueSeed(type){
+    const history=loadJSON(STORAGE.history,{});const seen=new Set(history[type]||[]);let seed;
+    do{seed=(Date.now()+Math.floor(Math.random()*1e9))>>>0;}while(seen.has(seed));
+    return seed;
+  }
+  function updateStats(){const stats=loadJSON(STORAGE.stats,{played:0,completed:0});const el=$("#playedCount");if(el)el.textContent=stats.played||0;}
+
+  function renderHome(){
+    $("#gameGrid").innerHTML=GAMES.map(g=>`<button class="game-card" data-game="${g.id}"><div><div class="game-icon">${g.icon}</div><h4>${g.title}</h4><p>${g.desc}</p></div><div class="game-meta"><span>${g.meta}</span><span>›</span></div></button>`).join("");
+    $$(".game-card").forEach(b=>b.addEventListener("click",()=>openGame(b.dataset.game)));
+  }
+
+  function showHome(){
+    $("#playScreen").classList.remove("active");$("#homeScreen").classList.add("active");currentGame=null;currentState=null;boardView=null;window.scrollTo(0,0);
+  }
+  function openGame(id){
+    currentGame=id;$("#homeScreen").classList.remove("active");$("#playScreen").classList.add("active");
+    const g=GAMES.find(x=>x.id===id);$("#gameTitle").textContent=g.title;$("#gameSubtitle").textContent=g.desc;
+    $("#playDifficulty").value=localStorage.getItem(STORAGE.difficulty)||"medium";updateToolbarForGame();newPuzzle();window.scrollTo(0,0);
+  }
+  function updateToolbarForGame(){
+    const isScramble=currentGame==="scramble";
+    $("#newBtn").style.display=isScramble?"none":"";
+    $("#checkBtn").style.display=isScramble?"none":"";
+  }
+  function makeBoardShell(inner,viewportClass=""){
+    return `<div class="board-stage"><div class="board-viewport ${viewportClass}" id="boardViewport"><div class="board-surface" id="boardSurface">${inner}</div></div></div>`;
+  }
+  function initBoardViewport(){
+    const viewport=$("#boardViewport"),surface=$("#boardSurface");
+    if(!viewport||!surface||!surface.firstElementChild){boardView=null;return;}
+    const board=surface.firstElementChild,pad=12;
+    surface.style.transform='translate(0px,0px) scale(1)';
+    const vw=viewport.clientWidth||320,vh=viewport.clientHeight||320;
+    const bw=board.offsetWidth||board.getBoundingClientRect().width||320;
+    const bh=board.offsetHeight||board.getBoundingClientRect().height||320;
+    const fit=Math.min((vw-pad*2)/bw,(vh-pad*2)/bh,1);
+    boardView={viewport,surface,board,bw,bh,vw,vh,scale:fit,minScale:fit,maxScale:3,x:0,y:0};
+    const clamp=()=>{
+      const sw=boardView.bw*boardView.scale,sh=boardView.bh*boardView.scale;
+      if(sw<=boardView.vw)boardView.x=(boardView.vw-sw)/2;else boardView.x=Math.min(0,Math.max(boardView.vw-sw,boardView.x));
+      if(sh<=boardView.vh)boardView.y=(boardView.vh-sh)/2;else boardView.y=Math.min(0,Math.max(boardView.vh-sh,boardView.y));
+    };
+    const draw=()=>{clamp();surface.style.transform=`translate(${boardView.x}px,${boardView.y}px) scale(${boardView.scale})`;};
+    boardView.clamp=clamp;boardView.draw=draw;
+    boardView.x=(vw-bw*fit)/2;boardView.y=(vh-bh*fit)/2;draw();
+    let pinchStart=null;
+    const getInfo=e=>{
+      const [a,b]=[e.touches[0],e.touches[1]];
+      const center={x:(a.clientX+b.clientX)/2-viewport.getBoundingClientRect().left,y:(a.clientY+b.clientY)/2-viewport.getBoundingClientRect().top};
+      const dist=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);
+      return {center,dist};
+    };
+    viewport.addEventListener('touchstart',e=>{
+      if(e.touches.length===2){
+        const info=getInfo(e);
+        pinchStart={scale:boardView.scale,x:boardView.x,y:boardView.y,dist:info.dist,center:info.center,anchorX:(info.center.x-boardView.x)/boardView.scale,anchorY:(info.center.y-boardView.y)/boardView.scale};
+        e.preventDefault();
+      }
+    },{passive:false});
+    viewport.addEventListener('touchmove',e=>{
+      if(e.touches.length===2&&pinchStart){
+        const info=getInfo(e);
+        boardView.scale=Math.max(boardView.minScale,Math.min(boardView.maxScale,pinchStart.scale*(info.dist/pinchStart.dist||1)));
+        boardView.x=info.center.x-pinchStart.anchorX*boardView.scale;
+        boardView.y=info.center.y-pinchStart.anchorY*boardView.scale;
+        draw();
+        e.preventDefault();
+      }
+    },{passive:false});
+    viewport.addEventListener('touchend',e=>{if(e.touches.length<2)pinchStart=null;});
+  }
+  function newPuzzle(){
+    if(!currentGame)return;
+    setStatus("");$("#gameArea").innerHTML="";$("#extraControls").innerHTML="";
+    const seed=uniqueSeed(currentGame);recordPlayed(currentGame,seed);
+    const builders={sudoku:buildSudoku,crossword:buildCrossword,wordsearch:buildWordSearch,maze:buildMaze,nonogram:buildNonogram,scramble:buildScramble,cryptogram:buildCryptogram,logic:buildLogic,riddle:buildRiddle,trivia:buildTrivia};
+    builders[currentGame](seed);
+  }
+  function showLoading(text="Making a fresh puzzle…"){$("#gameArea").innerHTML=`<div class="prompt-card"><div class="question">${text}</div></div>`;}
+
+  // ---------- Sudoku ----------
+  function makeSudoku(seed,difficulty){
+    const rng=mulberry32(seed),base=3,side=9;
+    const pattern=(r,c)=>(base*(r%base)+Math.floor(r/base)+c)%side;
+    const rBase=[0,1,2];
+    const rows=shuffle(rBase,rng).flatMap(g=>shuffle(rBase,rng).map(r=>g*base+r));
+    const cols=shuffle(rBase,rng).flatMap(g=>shuffle(rBase,rng).map(c=>g*base+c));
+    const nums=shuffle([1,2,3,4,5,6,7,8,9],rng);
+    const solution=rows.flatMap(r=>cols.map(c=>nums[pattern(r,c)]));
+    const puzzle=[...solution];
+    const remove={easy:38,medium:48,hard:56}[difficulty];
+    shuffle([...Array(81).keys()],rng).slice(0,remove).forEach(i=>puzzle[i]=0);
+    return {solution,puzzle,values:[...puzzle],selected:null,seed};
+  }
+  function buildSudoku(seed){currentState=makeSudoku(seed,getDifficulty());renderSudoku();}
+  function renderSudoku(){
+    const st=currentState;
+    $("#gameArea").innerHTML=makeBoardShell(`<div class="sudoku" id="sudokuBoard"></div>`);
+    const board=$("#sudokuBoard");
+    st.values.forEach((v,i)=>{
+      const b=document.createElement("button");b.className="sudoku-cell"+(st.puzzle[i]?" fixed":"")+((Math.floor(i/9)+1)%3===0&&Math.floor(i/9)!==8?" block-bottom":"");
+      b.textContent=v||"";b.dataset.i=i;b.addEventListener("click",()=>selectSudoku(i));board.appendChild(b);
+    });
+    $("#extraControls").innerHTML=`<div class="control-grid">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-num="${n}">${n}</button>`).join("")}<button data-num="0">⌫</button></div>`;
+    $$("[data-num]",$("#extraControls")).forEach(b=>b.addEventListener("click",()=>sudokuInput(+b.dataset.num)));
+    initBoardViewport();
+  }
+  function selectSudoku(i){
+    if(currentState.puzzle[i])return;currentState.selected=i;
+    $$(".sudoku-cell").forEach((c,j)=>{c.classList.toggle("selected",j===i);c.classList.toggle("related",j!==i&&(Math.floor(j/9)===Math.floor(i/9)||j%9===i%9));});
+  }
+  function sudokuInput(n){const st=currentState;if(st.selected==null)return toast("Tap an empty square first");st.values[st.selected]=n;const cell=$(`.sudoku-cell[data-i="${st.selected}"]`);cell.textContent=n||"";cell.classList.remove("wrong");if(st.values.every((v,i)=>v===st.solution[i])){setStatus("Solved! Beautiful work.","good");recordCompleted();}}
+  function sudokuCheck(){let wrong=0;$$(".sudoku-cell").forEach((c,i)=>{const w=currentState.values[i]&&currentState.values[i]!==currentState.solution[i];c.classList.toggle("wrong",!!w);if(w)wrong++;});setStatus(wrong?`${wrong} square${wrong===1?"":"s"} need another look.`:"Everything filled so far is correct.",wrong?"bad":"good");}
+  function sudokuHint(){const st=currentState;let i=st.selected;if(i==null||st.values[i]===st.solution[i])i=st.values.findIndex((v,j)=>v!==st.solution[j]);if(i<0)return;st.values[i]=st.solution[i];const c=$(`.sudoku-cell[data-i="${i}"]`);c.textContent=st.solution[i];c.classList.remove("wrong");selectSudoku(i);setStatus("One square filled in.");}
+
+  // ---------- Online word expansion ----------
+  async function fetchThemeEntries(theme,needDefinitions=false){
+    const cache=loadJSON(STORAGE.wordCache,{});const key=theme+(needDefinitions?"_defs":"_words");
+    if(cache[key]&&Date.now()-cache[key].time<1000*60*60*24*14)return cache[key].items;
+    try{
+      const url=`https://api.datamuse.com/words?ml=${encodeURIComponent(theme)}&max=250&md=${needDefinitions?"dp":"p"}`;
+      const res=await fetch(url);if(!res.ok)throw new Error("word source unavailable");
+      const data=await res.json();
+      const items=data.filter(x=>/^[a-z]+$/i.test(x.word)&&x.word.length>=4&&x.word.length<=10)
+        .map(x=>[x.word.toUpperCase(),needDefinitions&&x.defs?.length?String(x.defs[0]).replace(/^\w+\t/,""): `A word connected with ${theme}`]);
+      if(items.length){cache[key]={time:Date.now(),items};saveJSON(STORAGE.wordCache,cache);return items;}
+    }catch(e){console.warn(e);}
+    return [];
+  }
+  function baseEntries(theme){return THEMES[theme]||THEMES.nature;}
+
+  // ---------- Word Search ----------
+  async function buildWordSearch(seed){
+    showLoading("Hiding words in a fresh grid…");
+    const rng=mulberry32(seed),theme=pick(Object.keys(THEMES),rng),difficulty=getDifficulty();
+    const online=await fetchThemeEntries(theme,false);const pool=shuffle([...baseEntries(theme),...online],rng);
+    const size={easy:10,medium:13,hard:16}[difficulty],count={easy:7,medium:11,hard:15}[difficulty];
+    const words=[];for(const [w] of pool){if(w.length<=size&&!words.includes(w)){words.push(w);if(words.length===count)break;}}
+    currentState=makeWordSearch(seed,size,words,theme);renderWordSearch();
+  }
+  function makeWordSearch(seed,size,words,theme){
+    const rng=mulberry32(seed^0x91ab),grid=Array.from({length:size},()=>Array(size).fill(""));
+    const dirs=[[0,1],[1,0],[1,1],[-1,1],[0,-1],[-1,0],[-1,-1],[1,-1]],placements=[];
+    for(const word of words){let placed=false;for(let attempt=0;attempt<250&&!placed;attempt++){
+      const [dr,dc]=pick(dirs,rng),r=randInt(rng,0,size-1),c=randInt(rng,0,size-1),er=r+dr*(word.length-1),ec=c+dc*(word.length-1);
+      if(er<0||er>=size||ec<0||ec>=size)continue;let ok=true;
+      for(let k=0;k<word.length;k++){const ch=grid[r+dr*k][c+dc*k];if(ch&&ch!==word[k]){ok=false;break;}}
+      if(!ok)continue;const cells=[];for(let k=0;k<word.length;k++){grid[r+dr*k][c+dc*k]=word[k];cells.push((r+dr*k)*size+(c+dc*k));}placements.push({word,cells});placed=true;
+    }}
+    const letters="ABCDEFGHIJKLMNOPQRSTUVWXYZ";grid.forEach(row=>row.forEach((x,i)=>{if(!x)row[i]=letters[randInt(rng,0,25)];}));
+    return {grid,size,placements,found:new Set(),start:null,trace:[],theme};
+  }
+  function renderWordSearch(){
+    const st=currentState;
+    $("#gameArea").innerHTML=`<div class="helper-card"><strong>Theme:</strong> ${st.theme[0].toUpperCase()+st.theme.slice(1)}. The whole puzzle starts fit to the box. Drag from the first letter to the last.</div>${makeBoardShell(`<div class="word-grid" id="wordGrid" style="grid-template-columns:repeat(${st.size},34px)"></div>`)}<div class="word-list" id="wordList"></div>`;
+    const grid=$("#wordGrid");st.grid.flat().forEach((ch,i)=>{const b=document.createElement("button");b.className="word-cell";b.textContent=ch;b.dataset.i=i;grid.appendChild(b);});
+    grid.addEventListener("pointerdown",wordPointerDown);grid.addEventListener("pointermove",wordPointerMove);grid.addEventListener("pointerup",wordPointerUp);grid.addEventListener("pointercancel",wordPointerUp);
+    $("#wordList").innerHTML=st.placements.map(p=>`<span class="word-chip" data-word="${p.word}">${p.word}</span>`).join("");
+    initBoardViewport();
+  }
+  function straightLine(a,b,size){const ar=Math.floor(a/size),ac=a%size,br=Math.floor(b/size),bc=b%size,dr=Math.sign(br-ar),dc=Math.sign(bc-ac),rd=Math.abs(br-ar),cd=Math.abs(bc-ac);if(!(ar===br||ac===bc||rd===cd))return[];const len=Math.max(rd,cd)+1;return Array.from({length:len},(_,k)=>(ar+dr*k)*size+(ac+dc*k));}
+  function wordPointerDown(e){e.preventDefault();const cell=e.target.closest(".word-cell");if(!cell)return;currentState.start=+cell.dataset.i;currentState.trace=[currentState.start];e.currentTarget.setPointerCapture?.(e.pointerId);paintWordTrace();}
+  function wordPointerMove(e){if(currentState.start==null)return;const el=document.elementFromPoint(e.clientX,e.clientY)?.closest?.(".word-cell");if(!el)return;currentState.trace=straightLine(currentState.start,+el.dataset.i,currentState.size);paintWordTrace();}
+  function wordPointerUp(){const st=currentState;if(st.start==null)return;const hit=st.placements.find(p=>!st.found.has(p.word)&&(sameArray(st.trace,p.cells)||sameArray(st.trace,[...p.cells].reverse())));if(hit){st.found.add(hit.word);hit.cells.forEach(i=>$(`.word-cell[data-i="${i}"]`).classList.add("found"));$(`.word-chip[data-word="${hit.word}"]`).classList.add("found");setStatus(`Found ${hit.word}!`,"good");if(st.found.size===st.placements.length){setStatus("You found every word!","good");recordCompleted();}}st.start=null;st.trace=[];paintWordTrace();}
+  function sameArray(a,b){return a.length===b.length&&a.every((v,i)=>v===b[i]);}
+  function paintWordTrace(){$$(".word-cell").forEach((c,i)=>c.classList.toggle("trace",currentState.trace.includes(i)&&!c.classList.contains("found")));}
+  function wordHint(){const p=currentState.placements.find(x=>!currentState.found.has(x.word));if(!p)return;const c=$(`.word-cell[data-i="${p.cells[0]}"]`);c.classList.add("trace");setTimeout(()=>c.classList.remove("trace"),1300);setStatus(`Look for a word beginning with ${p.word[0]}.`);}
+  function wordCheck(){setStatus(`${currentState.found.size} of ${currentState.placements.length} words found.`);}
+
+  // ---------- Maze ----------
+  function makeMaze(seed,n){
+    const rng=mulberry32(seed),cells=Array.from({length:n*n},()=>[1,1,1,1]),visited=new Set([0]),stack=[0],dirs=[[-1,0,0,2],[0,1,1,3],[1,0,2,0],[0,-1,3,1]];
+    while(stack.length){const cur=stack[stack.length-1],r=Math.floor(cur/n),c=cur%n;const options=dirs.filter(([dr,dc])=>{const nr=r+dr,nc=c+dc;return nr>=0&&nr<n&&nc>=0&&nc<n&&!visited.has(nr*n+nc);});if(!options.length){stack.pop();continue;}const [dr,dc,w,ow]=pick(options,rng),ni=(r+dr)*n+(c+dc);cells[cur][w]=0;cells[ni][ow]=0;visited.add(ni);stack.push(ni);}
+    return {n,cells,pos:0,goal:n*n-1,moves:0,startTime:Date.now(),seed};
+  }
+  function buildMaze(seed){const n={easy:9,medium:15,hard:21}[getDifficulty()];currentState=makeMaze(seed,n);$("#gameArea").innerHTML=makeBoardShell(`<canvas id="mazeCanvas" width="700" height="700"></canvas>`);$("#extraControls").innerHTML=`<div class="maze-pad"><button class="up" data-dir="0">↑</button><button class="left" data-dir="3">←</button><button class="down" data-dir="2">↓</button><button class="right" data-dir="1">→</button></div>`;$$("[data-dir]",$("#extraControls")).forEach(b=>b.addEventListener("click",()=>mazeMove(+b.dataset.dir)));const c=$("#mazeCanvas");let sx=0,sy=0;c.addEventListener("pointerdown",e=>{sx=e.clientX;sy=e.clientY;c.setPointerCapture?.(e.pointerId);});c.addEventListener("pointerup",e=>{const dx=e.clientX-sx,dy=e.clientY-sy;if(Math.max(Math.abs(dx),Math.abs(dy))<18)return;mazeMove(Math.abs(dx)>Math.abs(dy)?(dx>0?1:3):(dy>0?2:0));});drawMaze();initBoardViewport();}
+  function drawMaze(){const st=currentState,c=$("#mazeCanvas");if(!c)return;const ctx=c.getContext("2d"),s=c.width/st.n;ctx.clearRect(0,0,c.width,c.height);ctx.fillStyle="#fff";ctx.fillRect(0,0,c.width,c.height);ctx.strokeStyle="#20302c";ctx.lineWidth=Math.max(2,700/st.n/12);ctx.lineCap="square";st.cells.forEach((walls,i)=>{const r=Math.floor(i/st.n),col=i%st.n,x=col*s,y=r*s;ctx.beginPath();if(walls[0]){ctx.moveTo(x,y);ctx.lineTo(x+s,y)}if(walls[1]){ctx.moveTo(x+s,y);ctx.lineTo(x+s,y+s)}if(walls[2]){ctx.moveTo(x,y+s);ctx.lineTo(x+s,y+s)}if(walls[3]){ctx.moveTo(x,y);ctx.lineTo(x,y+s)}ctx.stroke();});ctx.fillStyle="#64ad82";ctx.fillRect(s*.22,s*.22,s*.56,s*.56);const gr=Math.floor(st.goal/st.n),gc=st.goal%st.n;ctx.font=`${s*.55}px sans-serif`;ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("⚑",gc*s+s/2,gr*s+s/2);const pr=Math.floor(st.pos/st.n),pc=st.pos%st.n;ctx.beginPath();ctx.arc(pc*s+s/2,pr*s+s/2,s*.27,0,Math.PI*2);ctx.fillStyle="#d29a3a";ctx.fill();ctx.strokeStyle="#734f16";ctx.lineWidth=2;ctx.stroke();}
+  function mazeMove(dir){const st=currentState;if(st.cells[st.pos][dir])return;const d=[-st.n,1,st.n,-1][dir];st.pos+=d;st.moves++;drawMaze();if(st.pos===st.goal){const seconds=Math.round((Date.now()-st.startTime)/1000);setStatus(`Escaped in ${st.moves} moves and ${seconds} seconds!`,"good");recordCompleted();}}
+  function mazeHint(){const st=currentState,queue=[[st.pos,[]]],seen=new Set([st.pos]);while(queue.length){const [p,path]=queue.shift();if(p===st.goal){const names=["up","right","down","left"];setStatus(`Try moving ${names[path[0]]}.`);return;}for(let d=0;d<4;d++){if(!st.cells[p][d]){const np=p+[-st.n,1,st.n,-1][d];if(!seen.has(np)){seen.add(np);queue.push([np,[...path,d]]);}}}}}
+  function mazeCheck(){setStatus(`${currentState.moves} moves so far. Keep heading for the flag.`);}
+
+  // ---------- Nonogram ----------
+  function cluesForLine(line){const out=[];let n=0;for(const v of line){if(v)n++;else if(n){out.push(n);n=0;}}if(n)out.push(n);return out.length?out:[0];}
+  function makeNonogram(seed,n){const rng=mulberry32(seed),solution=Array.from({length:n},()=>Array(n).fill(0));for(let r=0;r<n;r++)for(let c=0;c<Math.ceil(n/2);c++){const chance=.38+(Math.sin((r+1)*(c+2))*0.06);const v=rng()<chance?1:0;solution[r][c]=v;solution[r][n-1-c]=v;}if(solution.flat().filter(Boolean).length<n)solution[Math.floor(n/2)].fill(1);return{n,solution,values:Array.from({length:n},()=>Array(n).fill(0)),mode:1,rowClues:solution.map(cluesForLine),colClues:Array.from({length:n},(_,c)=>cluesForLine(solution.map(r=>r[c])))};}
+  function buildNonogram(seed){const n={easy:5,medium:8,hard:10}[getDifficulty()];currentState=makeNonogram(seed,n);renderNonogram();}
+  function renderNonogram(){const st=currentState;$("#gameArea").innerHTML=`<div class="helper-card">Fill squares so each row and column matches its number groups.</div>${makeBoardShell(`<div class="nonogram-shell"><div class="nono-corner"></div><div class="nono-col-clues" style="grid-template-columns:repeat(${st.n},32px)">${st.colClues.map(x=>`<div class="nono-col-clue">${x.map(n=>`<span>${n}</span>`).join("")}</div>`).join("")}</div><div class="nono-row-clues" style="grid-template-rows:repeat(${st.n},32px)">${st.rowClues.map(x=>`<div class="nono-row-clue">${x.map(n=>`<span>${n}</span>`).join("")}</div>`).join("")}</div><div class="nono-grid" id="nonoGrid" style="grid-template-columns:repeat(${st.n},32px)"></div></div>`)} `;const grid=$("#nonoGrid");for(let r=0;r<st.n;r++)for(let c=0;c<st.n;c++){const b=document.createElement("button");b.className="nono-cell";b.dataset.r=r;b.dataset.c=c;b.addEventListener("click",()=>nonoTap(r,c));grid.appendChild(b);}$("#extraControls").innerHTML=`<div class="control-grid"><button id="fillMode" class="active">■ Fill</button><button id="markMode">× Mark</button></div>`;$("#fillMode").addEventListener("click",()=>setNonoMode(1));$("#markMode").addEventListener("click",()=>setNonoMode(2));initBoardViewport();}
+  function setNonoMode(m){currentState.mode=m;$("#fillMode").classList.toggle("active",m===1);$("#markMode").classList.toggle("active",m===2);}
+  function nonoTap(r,c){const st=currentState;st.values[r][c]=st.values[r][c]===st.mode?0:st.mode;const el=$(`.nono-cell[data-r="${r}"][data-c="${c}"]`);el.className="nono-cell"+(st.values[r][c]===1?" filled":st.values[r][c]===2?" marked":"");if(st.solution.every((row,ri)=>row.every((v,ci)=>(st.values[ri][ci]===1?1:0)===v))){setStatus("Picture complete!","good");recordCompleted();}}
+  function nonoCheck(){let wrong=0;$$(".nono-cell").forEach(el=>{const r=+el.dataset.r,c=+el.dataset.c,w=currentState.values[r][c]===1&&!currentState.solution[r][c];el.classList.toggle("wrong",w);if(w)wrong++;});setStatus(wrong?`${wrong} filled square${wrong===1?"":"s"} should be empty.`:"No incorrect filled squares so far.",wrong?"bad":"good");}
+  function nonoHint(){const st=currentState;for(let r=0;r<st.n;r++)for(let c=0;c<st.n;c++){const should=st.solution[r][c]?1:2;if(st.values[r][c]!==should){st.values[r][c]=should;const el=$(`.nono-cell[data-r="${r}"][data-c="${c}"]`);el.className="nono-cell "+(should===1?"filled":"marked");setStatus("One square revealed.");return;}}}
+
+  // ---------- Scramble ----------
+  async function buildScramble(seed){showLoading("Mixing up a new word…");const rng=mulberry32(seed),theme=pick(Object.keys(THEMES),rng),online=await fetchThemeEntries(theme,true),pool=[...baseEntries(theme),...online.filter(x=>x[1]&&!x[1].startsWith("A word"))];let entry=pick(pool,rng),word=entry[0],mixed=word;for(let i=0;i<12&&mixed===word;i++)mixed=shuffle([...word],rng).join("");currentState={answer:word,clue:entry[1],mixed,typed:"",used:[],theme,solved:false};renderScramble();}
+  function renderScramble(){const st=currentState;$("#gameArea").innerHTML=`<div class="prompt-card"><div class="question">${st.clue}</div><div class="big" id="scrambleAnswer">${st.typed||"_ ".repeat(st.answer.length)}</div></div><div class="letter-tiles" id="scrambleTiles"></div>`;$("#scrambleTiles").innerHTML=[...st.mixed].map((l,i)=>`<button data-i="${i}" ${st.used.includes(i)?"disabled":""} style="${st.used.includes(i)?"opacity:.3":""}">${l}</button>`).join("");$$("#scrambleTiles button").forEach(b=>b.addEventListener("click",()=>{if(b.disabled)return;const i=+b.dataset.i;currentState.used.push(i);currentState.typed+=b.textContent;renderScramble();if(currentState.typed.length===currentState.answer.length)scrambleCheck();}));$("#extraControls").innerHTML=`<div class="control-grid"><button id="scrambleBack">⌫</button><button id="scrambleClear">Clear</button><button id="scrambleNext" ${st.solved?"":"disabled"}>Next</button></div>`;$("#scrambleBack").addEventListener("click",()=>{currentState.typed=currentState.typed.slice(0,-1);currentState.used.pop();currentState.solved=false;renderScramble();});$("#scrambleClear").addEventListener("click",()=>{currentState.typed="";currentState.used=[];currentState.solved=false;renderScramble();});$("#scrambleNext").addEventListener("click",()=>newPuzzle());}
+  function updateScramble(){$("#scrambleAnswer").textContent=currentState.typed||"_ ".repeat(currentState.answer.length);if(currentState.typed.length===currentState.answer.length)scrambleCheck();}
+  function scrambleCheck(){if(currentState.typed===currentState.answer){currentState.solved=true;setStatus("That is it! Tap Next for another word.","good");renderScramble();recordCompleted();}else{currentState.solved=false;setStatus("Those letters need another shuffle.","bad");}}
+  function scrambleHint(){const i=currentState.typed.length;if(i>=currentState.answer.length)return;setStatus(`The next letter is ${currentState.answer[i]}.`);}
+
+  // ---------- Riddle ----------
+  function buildRiddle(seed){const rng=mulberry32(seed),item=RIDDLES[seed%RIDDLES.length],lines=shuffle(item.q,rng);currentState={...item,question:lines.join(" "),hintShown:false};$("#gameArea").innerHTML=`<div class="prompt-card"><div class="question">${currentState.question}</div><input class="answer-input" id="riddleAnswer" autocomplete="off" placeholder="Type your answer" /></div>`;$("#riddleAnswer").addEventListener("keydown",e=>{if(e.key==="Enter")riddleCheck();});}
+  function riddleCheck(){const val=cleanAnswer($("#riddleAnswer").value);if(val===cleanAnswer(currentState.a)){setStatus(`Correct — ${currentState.a}!`,"good");recordCompleted();}else setStatus("Not quite. Try the hint or another answer.","bad");}
+  function riddleHint(){setStatus(currentState.h);}
+
+  // ---------- Cryptogram ----------
+  function makeCipher(seed){const rng=mulberry32(seed),alpha="ABCDEFGHIJKLMNOPQRSTUVWXYZ",arr=[...alpha];let shuffled;do{shuffled=shuffle(arr,rng);}while(shuffled.some((x,i)=>x===arr[i]));return Object.fromEntries(arr.map((x,i)=>[x,shuffled[i]]));}
+  function buildCryptogram(seed){const quote=QUOTES[seed%QUOTES.length],cipher=makeCipher(seed),encoded=[...quote].map(ch=>cipher[ch]||ch).join("");currentState={quote,encoded,cipher,guesses:{},selected:null};renderCryptogram();}
+  function renderCryptogram(){const st=currentState;const tokens=st.encoded.split(" ").map(word=>`<div class="crypto-word">${[...word].map(ch=>/[A-Z]/.test(ch)?`<button class="crypto-letter" data-c="${ch}"><span class="guess">${st.guesses[ch]||""}</span><span class="cipher">${ch}</span></button>`:`<span class="crypto-punc">${ch}</span>`).join("")}</div>`).join("");$("#gameArea").innerHTML=`<div class="helper-card">Tap a coded letter, then choose what you think it represents.</div><div class="crypto-quote">${tokens}</div><div class="alpha-pad" id="alphaPad">${[..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"].map(l=>`<button data-l="${l}">${l}</button>`).join("")}<button data-l="">⌫</button></div>`;$$(".crypto-letter").forEach(b=>b.addEventListener("click",()=>{st.selected=b.dataset.c;renderCryptogram();}));if(st.selected)$$(`.crypto-letter[data-c="${st.selected}"]`).forEach(b=>b.classList.add("selected"));$$("#alphaPad button").forEach(b=>b.addEventListener("click",()=>cryptoGuess(b.dataset.l)));}
+  function cryptoGuess(letter){const st=currentState;if(!st.selected)return toast("Tap a coded letter first");for(const key of Object.keys(st.guesses))if(st.guesses[key]===letter&&key!==st.selected)delete st.guesses[key];if(letter)st.guesses[st.selected]=letter;else delete st.guesses[st.selected];renderCryptogram();cryptoAutoCheck();}
+  function decodedCrypto(){return [...currentState.encoded].map(ch=>currentState.guesses[ch]||ch.replace(/[A-Z]/,"_")).join("");}
+  function cryptoAutoCheck(){const decoded=[...currentState.encoded].map(ch=>/[A-Z]/.test(ch)?(currentState.guesses[ch]||""):ch).join("");if(decoded===currentState.quote){setStatus("Cipher cracked!","good");recordCompleted();}}
+  function cryptoCheck(){const st=currentState;let wrong=0;for(const [c,g] of Object.entries(st.guesses)){const positions=[...st.encoded].map((x,i)=>x===c?i:-1).filter(i=>i>=0);if(positions.some(i=>st.quote[i]!==g))wrong++;}setStatus(wrong?`${wrong} letter mapping${wrong===1?"":"s"} are incorrect.`:"Every mapping entered so far is correct.",wrong?"bad":"good");}
+  function cryptoHint(){const st=currentState;for(let i=0;i<st.encoded.length;i++){const c=st.encoded[i],plain=st.quote[i];if(/[A-Z]/.test(c)&&st.guesses[c]!==plain){st.guesses[c]=plain;st.selected=c;renderCryptogram();setStatus(`${c} stands for ${plain}.`);return;}}}
+
+  // ---------- Logic Lineup ----------
+  function permutations(arr){if(arr.length<=1)return[arr];const out=[];arr.forEach((x,i)=>permutations([...arr.slice(0,i),...arr.slice(i+1)]).forEach(p=>out.push([x,...p])));return out;}
+  function makeLogic(seed,n){const rng=mulberry32(seed),names=shuffle(NAMES,rng).slice(0,n),solution=shuffle(names,rng),all=permutations(names);const clues=[];
+    const candidates=[];
+    for(let a=0;a<n;a++)for(let b=0;b<n;b++)if(a!==b){const A=solution[a],B=solution[b];if(a<b)candidates.push({t:`${A} is somewhere before ${B}.`,f:p=>p.indexOf(A)<p.indexOf(B),weight:1});if(b===a+1)candidates.push({t:`${B} is immediately after ${A}.`,f:p=>p.indexOf(B)===p.indexOf(A)+1,weight:2});}
+    for(let i=0;i<n;i++){const A=solution[i];candidates.push({t:`${A} is not in position ${((i+1)%n)+1}.`,f:p=>p[((i+1)%n)]!==A,weight:1});if(i===0||i===n-1)candidates.push({t:`${A} is at one end of the line.`,f:p=>p[0]===A||p[n-1]===A,weight:2});}
+    let possible=all;for(const clue of shuffle(candidates,rng)){const next=possible.filter(clue.f);if(next.length<possible.length&&next.some(p=>sameArray(p,solution))){clues.push(clue);possible=next;}if(possible.length===1)break;}
+    if(possible.length>1){for(let i=0;i<n&&possible.length>1;i++){const A=solution[i],clue={t:`${A} is in position ${i+1}.`,f:p=>p[i]===A};clues.push(clue);possible=possible.filter(clue.f);}}
+    return{names,solution,clues:clues.map(x=>x.t),slots:Array(n).fill(null),selected:null};
+  }
+  function buildLogic(seed){const n={easy:4,medium:5,hard:6}[getDifficulty()];currentState=makeLogic(seed,n);renderLogic();}
+  function renderLogic(){const st=currentState;$("#gameArea").innerHTML=`<div class="helper-card"><strong>Put everyone in order from position 1 to ${st.names.length}.</strong><ol class="logic-clues">${st.clues.map(c=>`<li>${c}</li>`).join("")}</ol></div><div class="logic-slots">${st.slots.map((x,i)=>`<button class="logic-slot ${x?"filled":""}" data-slot="${i}"><strong>${i+1}</strong><span>${x||"Tap a name, then this spot"}</span></button>`).join("")}</div><div class="name-bank">${st.names.map(n=>`<button class="name-chip ${st.slots.includes(n)?"used":""} ${st.selected===n?"selected":""}" data-name="${n}">${n}</button>`).join("")}</div>`;$$(".name-chip").forEach(b=>b.addEventListener("click",()=>{if(st.slots.includes(b.dataset.name)){const i=st.slots.indexOf(b.dataset.name);st.slots[i]=null;}st.selected=b.dataset.name;renderLogic();}));$$(".logic-slot").forEach(b=>b.addEventListener("click",()=>{const i=+b.dataset.slot;if(st.selected){const old=st.slots.indexOf(st.selected);if(old>=0)st.slots[old]=null;st.slots[i]=st.selected;st.selected=null;renderLogic();}else if(st.slots[i]){st.selected=st.slots[i];st.slots[i]=null;renderLogic();}}));}
+  function logicCheck(){const st=currentState;if(st.slots.some(x=>!x))return setStatus("Fill every position first.","bad");if(sameArray(st.slots,st.solution)){setStatus("Every clue fits — solved!","good");recordCompleted();}else setStatus("That order does not fit all the clues yet.","bad");}
+  function logicHint(){const st=currentState;for(let i=0;i<st.solution.length;i++)if(st.slots[i]!==st.solution[i]){const name=st.solution[i],old=st.slots.indexOf(name);if(old>=0)st.slots[old]=null;st.slots[i]=name;renderLogic();setStatus(`${name} belongs in position ${i+1}.`);return;}}
+
+  // ---------- Crossword ----------
+  function canPlaceCW(grid,word,r,c,dir){const n=grid.length,dr=dir==="D"?1:0,dc=dir==="A"?1:0,er=r+dr*(word.length-1),ec=c+dc*(word.length-1);if(r<0||c<0||er>=n||ec>=n)return false;const beforeR=r-dr,beforeC=c-dc,afterR=er+dr,afterC=ec+dc;if(beforeR>=0&&beforeC>=0&&beforeR<n&&beforeC<n&&grid[beforeR][beforeC])return false;if(afterR>=0&&afterC>=0&&afterR<n&&afterC<n&&grid[afterR][afterC])return false;let overlaps=0;for(let k=0;k<word.length;k++){const rr=r+dr*k,cc=c+dc*k,existing=grid[rr][cc];if(existing&&existing!==word[k])return false;if(existing===word[k])overlaps++;if(!existing){if(dir==="A"){if((rr>0&&grid[rr-1][cc])||(rr<n-1&&grid[rr+1][cc]))return false;}else{if((cc>0&&grid[rr][cc-1])||(cc<n-1&&grid[rr][cc+1]))return false;}}}return overlaps>0;}
+  function placeCW(grid,word,r,c,dir){const dr=dir==="D"?1:0,dc=dir==="A"?1:0;for(let k=0;k<word.length;k++)grid[r+dr*k][c+dc*k]=word[k];}
+  function generateCrossword(entries,seed,difficulty){const rng=mulberry32(seed),n=difficulty==="hard"?17:15,target={easy:7,medium:10,hard:13}[difficulty];for(let trial=0;trial<15;trial++){const grid=Array.from({length:n},()=>Array(n).fill("")),placements=[];const shuffled=shuffle(entries,rng).sort((a,b)=>b[0].length-a[0].length);const first=shuffled.shift();if(!first)break;let r=Math.floor(n/2),c=Math.floor((n-first[0].length)/2);placeCW(grid,first[0],r,c,"A");placements.push({word:first[0],clue:first[1],r,c,dir:"A"});for(const [word,clue] of shuffled){const options=[];for(const p of placements){for(let a=0;a<word.length;a++)for(let b=0;b<p.word.length;b++)if(word[a]===p.word[b]){const dir=p.dir==="A"?"D":"A",rr=p.r+(p.dir==="D"?b:0)-(dir==="D"?a:0),cc=p.c+(p.dir==="A"?b:0)-(dir==="A"?a:0);if(canPlaceCW(grid,word,rr,cc,dir))options.push([rr,cc,dir]);}}if(options.length){const [rr,cc,dir]=pick(options,rng);placeCW(grid,word,rr,cc,dir);placements.push({word,clue,r:rr,c:cc,dir});if(placements.length>=target)break;}}if(placements.length>=Math.min(6,target)){const used=[];placements.forEach(p=>{for(let k=0;k<p.word.length;k++)used.push([p.r+(p.dir==="D"?k:0),p.c+(p.dir==="A"?k:0)]);});const minR=Math.max(0,Math.min(...used.map(x=>x[0]))-1),maxR=Math.min(n-1,Math.max(...used.map(x=>x[0]))+1),minC=Math.max(0,Math.min(...used.map(x=>x[1]))-1),maxC=Math.min(n-1,Math.max(...used.map(x=>x[1]))+1);const trim=grid.slice(minR,maxR+1).map(row=>row.slice(minC,maxC+1));placements.forEach(p=>{p.r-=minR;p.c-=minC;});return{grid:trim,placements,values:{},active:null};}}return null;}
+  async function buildCrossword(seed){showLoading("Building intersecting words…");const rng=mulberry32(seed),theme=pick(Object.keys(THEMES),rng),online=await fetchThemeEntries(theme,true);const entries=shuffle([...baseEntries(theme),...online.filter(x=>x[1]&&x[1].length<100)],rng).filter((x,i,a)=>a.findIndex(y=>y[0]===x[0])===i);let cw=generateCrossword(entries,seed,getDifficulty());if(!cw)cw=generateCrossword(baseEntries("nature"),seed^55,"easy");cw.theme=theme;numberCrossword(cw);currentState=cw;renderCrossword();}
+  function numberCrossword(st){let num=1;const starts=new Map();const sorted=[...st.placements].sort((a,b)=>a.r-b.r||a.c-b.c);for(const p of sorted){const key=p.r+","+p.c;if(!starts.has(key))starts.set(key,num++);p.num=starts.get(key);}st.starts=starts;}
+  function renderCrossword(){const st=currentState,rows=st.grid.length,cols=st.grid[0].length;let cells="";for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const ch=st.grid[r][c],key=r+","+c;if(!ch)cells+=`<div class="cw-cell block"></div>`;else cells+=`<div class="cw-cell" data-r="${r}" data-c="${c}">${st.starts.has(key)?`<span class="cw-num">${st.starts.get(key)}</span>`:""}<input maxlength="1" inputmode="text" autocomplete="off" aria-label="Crossword cell" value="${st.values[key]||""}" /></div>`;}const across=st.placements.filter(p=>p.dir==="A").sort((a,b)=>a.num-b.num),down=st.placements.filter(p=>p.dir==="D").sort((a,b)=>a.num-b.num);$("#gameArea").innerHTML=`<div class="helper-card"><strong>Theme:</strong> ${st.theme}. The board stays in its own zoomable box. Tap a clue to jump to it, and your keyboard will open on that answer.</div><div class="crossword-wrap">${makeBoardShell(`<div class="crossword" style="grid-template-columns:repeat(${cols},38px)">${cells}</div>`)}<div class="clue-columns"><div class="clue-box"><h4>Across</h4>${across.map(p=>`<div class="clue-item" data-word="${p.word}" data-dir="A">${p.num}. ${p.clue}</div>`).join("")}</div><div class="clue-box"><h4>Down</h4>${down.map(p=>`<div class="clue-item" data-word="${p.word}" data-dir="D">${p.num}. ${p.clue}</div>`).join("")}</div></div></div>`;$$(".cw-cell input").forEach(inp=>{inp.addEventListener("focus",()=>activateCrossword(+inp.parentElement.dataset.r,+inp.parentElement.dataset.c));inp.addEventListener("click",()=>activateCrossword(+inp.parentElement.dataset.r,+inp.parentElement.dataset.c,true));inp.addEventListener("input",e=>cwInput(e));inp.addEventListener("keydown",e=>cwKey(e));});$$(".clue-item").forEach(el=>el.addEventListener("click",()=>{const p=st.placements.find(x=>x.word===el.dataset.word&&x.dir===el.dataset.dir);st.active=p;paintCrossword();focusCWCell(p.r,p.c);}));initBoardViewport();}
+  function wordsAt(r,c){return currentState.placements.filter(p=>{for(let k=0;k<p.word.length;k++)if(p.r+(p.dir==="D"?k:0)===r&&p.c+(p.dir==="A"?k:0)===c)return true;return false;});}
+  function activateCrossword(r,c,toggle=false){const ws=wordsAt(r,c);if(!ws.length)return;if(toggle&&currentState.active&&ws.includes(currentState.active)&&ws.length>1)currentState.active=ws.find(x=>x!==currentState.active);else if(!currentState.active||!ws.includes(currentState.active))currentState.active=ws[0];paintCrossword();}
+  function paintCrossword(){const st=currentState;$$(".cw-cell").forEach(x=>x.classList.remove("active","word-active"));$$(".clue-item").forEach(x=>x.classList.remove("active"));if(!st.active)return;for(let k=0;k<st.active.word.length;k++){const r=st.active.r+(st.active.dir==="D"?k:0),c=st.active.c+(st.active.dir==="A"?k:0);$(`.cw-cell[data-r="${r}"][data-c="${c}"]`)?.classList.add("word-active");}$(`.clue-item[data-word="${st.active.word}"][data-dir="${st.active.dir}"]`)?.classList.add("active");}
+  function focusCWCell(r,c){const inp=$(`.cw-cell[data-r="${r}"][data-c="${c}"] input`);inp?.focus();inp?.select();}
+  function cwInput(e){const el=e.target.parentElement,r=+el.dataset.r,c=+el.dataset.c,key=r+","+c,val=e.target.value.toUpperCase().replace(/[^A-Z]/g,"").slice(-1);e.target.value=val;currentState.values[key]=val;el.classList.remove("wrong");if(val)moveCW(1,r,c);cwSolved();}
+  function cwKey(e){if(e.key==="Backspace"&&!e.target.value){const el=e.target.parentElement;moveCW(-1,+el.dataset.r,+el.dataset.c);}}
+  function moveCW(step,r,c){const p=currentState.active;if(!p)return;let idx=-1;for(let k=0;k<p.word.length;k++)if(p.r+(p.dir==="D"?k:0)===r&&p.c+(p.dir==="A"?k:0)===c){idx=k;break;}const ni=idx+step;if(ni>=0&&ni<p.word.length)focusCWCell(p.r+(p.dir==="D"?ni:0),p.c+(p.dir==="A"?ni:0));}
+  function cwSolved(){const st=currentState;if(st.placements.every(p=>[...p.word].every((ch,k)=>st.values[(p.r+(p.dir==="D"?k:0))+","+(p.c+(p.dir==="A"?k:0))]===ch))){setStatus("Crossword complete!","good");recordCompleted();}}
+  function cwCheck(){let wrong=0;$$(".cw-cell:not(.block)").forEach(el=>{const r=+el.dataset.r,c=+el.dataset.c,key=r+","+c,answer=currentState.grid[r][c],v=currentState.values[key];const w=v&&v!==answer;el.classList.toggle("wrong",!!w);if(w)wrong++;});setStatus(wrong?`${wrong} letter${wrong===1?"":"s"} need changing.`:"All entered letters are correct.",wrong?"bad":"good");}
+  function cwHint(){const st=currentState;let p=st.active||st.placements[0];for(let k=0;k<p.word.length;k++){const r=p.r+(p.dir==="D"?k:0),c=p.c+(p.dir==="A"?k:0),key=r+","+c;if(st.values[key]!==p.word[k]){st.values[key]=p.word[k];const inp=$(`.cw-cell[data-r="${r}"][data-c="${c}"] input`);if(inp)inp.value=p.word[k];setStatus(`Filled one letter in ${p.num}-${p.dir==="A"?"Across":"Down"}.`);return;}}}
+
+  // ---------- Trivia ----------
+  const TRIVIA_CATEGORIES={"Any":"","General Knowledge":"9","Books":"10","Film":"11","Science & Nature":"17","Computers":"18","Mathematics":"19","Sports":"21","Geography":"22","History":"23","Art":"25","Animals":"27"};
+  async function getTriviaToken(){let token=localStorage.getItem(STORAGE.triviaToken);if(token)return token;try{const r=await fetch("https://opentdb.com/api_token.php?command=request");const d=await r.json();if(d.response_code===0){token=d.token;localStorage.setItem(STORAGE.triviaToken,token);return token;}}catch{}return"";}
+  function triviaSeenSet(){return new Set(loadJSON(STORAGE.triviaSeen,[]));}
+  function markTriviaSeen(question){const seen=loadJSON(STORAGE.triviaSeen,[]),key=hashString(question);if(!seen.includes(key)){seen.push(key);saveJSON(STORAGE.triviaSeen,seen.slice(-2000));}}
+  async function fetchTriviaBatch(category,difficulty){const token=await getTriviaToken();const params=new URLSearchParams({amount:"10",type:"multiple",encode:"url3986"});if(category)params.set("category",category);if(difficulty)params.set("difficulty",difficulty);if(token)params.set("token",token);const r=await fetch("https://opentdb.com/api.php?"+params);if(!r.ok)throw new Error("Trivia service unavailable");const d=await r.json();if(d.response_code===4&&token){await fetch(`https://opentdb.com/api_token.php?command=reset&token=${token}`);throw new Error("Trivia token reset; try again");}if(d.response_code!==0)throw new Error("No trivia available for that selection");const all=d.results.map(x=>({category:decodeURIComponent(x.category),difficulty:x.difficulty,question:decodeURIComponent(x.question),correct:decodeURIComponent(x.correct_answer),incorrect:x.incorrect_answers.map(decodeURIComponent)}));const seen=triviaSeenSet(),fresh=all.filter(x=>!seen.has(hashString(x.question)));return fresh.length?fresh:all;}
+  async function buildTrivia(seed){showLoading("Loading a fresh trivia round…");const score=currentState?.score||0,streak=currentState?.streak||0;const settings=loadJSON("puzzleTriviaSettings",{category:"",difficulty:getDifficulty()});let queue=[];try{queue=await fetchTriviaBatch(settings.category,settings.difficulty);}catch(e){console.warn(e);queue=shuffle(FALLBACK_TRIVIA.filter(x=>settings.difficulty?x.difficulty===settings.difficulty:true),mulberry32(seed));if(!queue.length)queue=shuffle(FALLBACK_TRIVIA,mulberry32(seed));toast("Using built-in trivia for this round");}currentState={queue,index:0,score,streak,answered:false,settings};renderTrivia();}
+  function renderTrivia(){const st=currentState,q=st.queue[st.index];if(!q){return newPuzzle();}markTriviaSeen(q.question);const rng=mulberry32(hashString(q.question)),choices=shuffle([q.correct,...q.incorrect],rng);st.current=q;st.choices=choices;st.answered=false;$("#gameArea").innerHTML=`<div class="score-row"><span>Score: ${st.score}</span><span>Streak: ${st.streak}</span><span>${q.category}</span></div><div class="prompt-card"><div class="question">${q.question}</div></div><div class="choice-list">${choices.map((c,i)=>`<button class="choice" data-i="${i}">${c}</button>`).join("")}</div>`;$("#extraControls").innerHTML=`<div class="control-grid"><select id="triviaCategory" aria-label="Trivia category">${Object.entries(TRIVIA_CATEGORIES).map(([n,v])=>`<option value="${v}" ${st.settings.category===v?"selected":""}>${n}</option>`).join("")}</select><button id="triviaNext">Next</button></div>`;$$(`.choice`).forEach(b=>b.addEventListener("click",()=>answerTrivia(b)));$("#triviaNext").addEventListener("click",nextTrivia);$("#triviaCategory").addEventListener("change",e=>{st.settings.category=e.target.value;st.settings.difficulty=getDifficulty();saveJSON("puzzleTriviaSettings",st.settings);newPuzzle();});}
+  function answerTrivia(btn){const st=currentState;if(st.answered)return;st.answered=true;const answer=btn.textContent,correct=st.current.correct;$$(`.choice`).forEach(b=>{b.disabled=true;if(b.textContent===correct)b.classList.add("correct");});if(answer===correct){st.score++;st.streak++;setStatus("Correct!","good");recordCompleted();}else{btn.classList.add("incorrect");st.streak=0;setStatus(`The answer is ${correct}.`,"bad");}}
+  function nextTrivia(){const st=currentState;if(!st.answered)return toast("Choose an answer first");st.index++;if(st.index>=st.queue.length){const score=st.score,streak=st.streak;buildTrivia(uniqueSeed("trivia")).then(()=>{currentState.score=score;currentState.streak=streak;renderTrivia();});}else renderTrivia();setStatus("");}
+  function triviaHint(){const st=currentState;if(st.answered)return;const wrong=$$(".choice").filter(b=>b.textContent!==st.current.correct&&!b.disabled);if(wrong.length){const choice=pick(wrong);choice.disabled=true;choice.style.opacity=.35;setStatus("One incorrect choice removed.");}}
+  function triviaCheck(){setStatus(`Score ${currentState.score}, current streak ${currentState.streak}.`);}
+
+  // ---------- Shared buttons ----------
+  function handleHint(){if(!currentGame)return;({sudoku:sudokuHint,crossword:cwHint,wordsearch:wordHint,maze:mazeHint,nonogram:nonoHint,scramble:scrambleHint,cryptogram:cryptoHint,logic:logicHint,riddle:riddleHint,trivia:triviaHint}[currentGame])?.();}
+  function handleCheck(){if(!currentGame)return;({sudoku:sudokuCheck,crossword:cwCheck,wordsearch:wordCheck,maze:mazeCheck,nonogram:nonoCheck,scramble:scrambleCheck,cryptogram:cryptoCheck,logic:logicCheck,riddle:riddleCheck,trivia:triviaCheck}[currentGame])?.();}
+
+  // ---------- Wiring ----------
+  $("#homeBtn").addEventListener("click",showHome);$("#backBtn").addEventListener("click",showHome);$("#newBtn").addEventListener("click",newPuzzle);$("#hintBtn").addEventListener("click",handleHint);$("#checkBtn").addEventListener("click",handleCheck);
+  $("#playDifficulty").value=localStorage.getItem(STORAGE.difficulty)||"medium";$("#playDifficulty").addEventListener("change",e=>{localStorage.setItem(STORAGE.difficulty,e.target.value);if(currentGame)newPuzzle();});
+  $("#infoBtn").addEventListener("click",()=>$("#infoOverlay").classList.add("open"));$("#closeInfoBtn").addEventListener("click",()=>$("#infoOverlay").classList.remove("open"));$("#infoOverlay").addEventListener("click",e=>{if(e.target.id==="infoOverlay")e.currentTarget.classList.remove("open");});
+  window.addEventListener("popstate",()=>{if($("#playScreen").classList.contains("active"))showHome();});
+  window.addEventListener("keydown",e=>{if(currentGame==="maze"){const map={ArrowUp:0,ArrowRight:1,ArrowDown:2,ArrowLeft:3};if(e.key in map){e.preventDefault();mazeMove(map[e.key]);}}});
+  if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+
+  window.addEventListener("resize",()=>{if($("#boardViewport"))setTimeout(initBoardViewport,0);});
+  renderHome();updateStats();
+})();
+</script>
+</body>
+</html>
