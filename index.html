@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
+  <meta name="theme-color" content="#315f56" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>Puzzler</title>
+  <link rel="manifest" href="./manifest.json" />
+  <style>
+    :root{
+      --bg:#f4f7f5;
+      --card:#ffffff;
+      --ink:#20302c;
+      --muted:#687a75;
+      --line:#dbe5e1;
+      --accent:#315f56;
+      --accent-dark:#244840;
+      --accent-soft:#dfeee9;
+      --gold:#d29a3a;
+      --danger:#a94242;
+      --good:#28734f;
+      --shadow:0 10px 30px rgba(34,65,57,.10);
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    body{padding-bottom:max(24px,env(safe-area-inset-bottom))}
+    button,input,select{font:inherit}
+    button{cursor:pointer}
+    .app{max-width:760px;margin:0 auto;min-height:100vh}
+    .topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(12px + env(safe-area-inset-top)) 14px 12px;background:rgba(244,247,245,.94);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+    .brand{display:flex;align-items:center;gap:10px;min-width:0}
+    .logo{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:var(--accent);color:white;font-size:23px;box-shadow:var(--shadow)}
+    .brand h1{font-size:20px;line-height:1;margin:0}
+    .brand small{display:block;color:var(--muted);margin-top:4px}
+    .header-actions{display:flex;gap:8px}
+    .icon-btn,.small-btn,.primary-btn,.soft-btn,.danger-btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:13px;min-height:44px;padding:9px 13px;font-weight:750;box-shadow:0 3px 12px rgba(34,65,57,.06)}
+    .icon-btn{width:44px;padding:0;font-size:20px}
+    .primary-btn{background:var(--accent);border-color:var(--accent);color:#fff}
+    .primary-btn:active{background:var(--accent-dark)}
+    .soft-btn{background:var(--accent-soft);border-color:#c8ded6;color:var(--accent-dark)}
+    .danger-btn{color:var(--danger);background:#fff5f5;border-color:#edd1d1}
+    .screen{display:none;padding:16px}
+    .screen.active{display:block}
+    .hero{background:linear-gradient(145deg,#315f56,#4a8074);color:white;border-radius:24px;padding:20px;box-shadow:var(--shadow);margin-bottom:16px}
+    .hero h2{font-size:26px;margin:0 0 8px}
+    .hero p{margin:0;line-height:1.45;color:#eff8f5}
+    .hero-row{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:16px;flex-wrap:wrap}
+    .difficulty{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);padding:8px 10px;border-radius:14px}
+    .difficulty select{border:0;border-radius:9px;padding:6px 8px;background:white;color:var(--ink);font-weight:750}
+    .stat-pill{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);padding:9px 12px;border-radius:999px;font-weight:750}
+    .section-title{display:flex;justify-content:space-between;align-items:end;gap:10px;margin:20px 2px 10px}
+    .section-title h3{margin:0;font-size:18px}
+    .section-title span{font-size:13px;color:var(--muted)}
+    .game-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .game-card{border:1px solid var(--line);background:var(--card);border-radius:20px;padding:15px;text-align:left;box-shadow:0 5px 18px rgba(34,65,57,.07);min-height:132px;display:flex;flex-direction:column;justify-content:space-between}
+    .game-card:active{transform:scale(.985)}
+    .game-icon{font-size:30px}
+    .game-card h4{margin:8px 0 3px;font-size:17px}
+    .game-card p{margin:0;color:var(--muted);font-size:13px;line-height:1.35}
+    .game-meta{display:flex;justify-content:space-between;align-items:center;margin-top:10px;color:var(--accent);font-size:12px;font-weight:800}
+    .footer-note{margin:20px 4px 4px;color:var(--muted);font-size:12px;line-height:1.45;text-align:center}
+    .footer-note a{color:var(--accent)}
+
+    .play-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+    .play-title{min-width:0;flex:1}
+    .play-title h2{font-size:21px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .play-title p{font-size:13px;color:var(--muted);margin:3px 0 0}
+    .tool-row{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}
+    .tool-row::-webkit-scrollbar{display:none}
+    .tool-row button,.tool-row select{flex:0 0 auto}
+    .tool-row select{min-height:44px;border:1px solid var(--line);background:white;border-radius:13px;padding:8px 11px;font-weight:750;color:var(--ink)}
+    .game-panel{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:14px;box-shadow:var(--shadow);overflow:hidden}
+    .status{min-height:24px;margin:10px 4px 0;text-align:center;font-weight:750;color:var(--muted)}
+    .status.good{color:var(--good)}
+    .status.bad{color:var(--danger)}
+    .board-stage{margin-top:10px}
+    .board-viewport{position:relative;width:100%;height:clamp(240px,72vw,540px);border:1px solid var(--line);border-radius:18px;background:#f8fbfa;overflow:hidden;touch-action:none}
+    .board-surface{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+    .control-grid{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px}
+    .control-grid button{min-width:48px;min-height:48px;border:1px solid var(--line);background:white;border-radius:13px;font-weight:850;font-size:18px}
+    .control-grid button.active{background:var(--accent);color:white;border-color:var(--accent)}
+    .control-grid button:disabled{opacity:.28;background:#eef1f0;color:#7f8b87;box-shadow:none;cursor:default}
+    .helper-card{margin-top:12px;background:#f8fbfa;border:1px solid var(--line);border-radius:15px;padding:12px;line-height:1.4}
+    .helper-card strong{color:var(--accent-dark)}
+    .theme-line{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-bottom:5px}
+    .theme-label{font-size:14px;font-weight:750;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+    .theme-name{font-size:24px;font-weight:900;color:var(--accent-dark);line-height:1}
+    .direction-line{font-size:14px;color:var(--ink);line-height:1.4}
+    .overlay{position:fixed;inset:0;z-index:60;background:rgba(19,35,31,.55);display:none;align-items:flex-end;justify-content:center;padding:16px}
+    .overlay.open{display:flex}
+    .sheet{width:min(100%,720px);max-height:80vh;overflow:auto;background:white;border-radius:24px;padding:18px;box-shadow:0 20px 80px rgba(0,0,0,.25)}
+    .sheet h3{margin:0 0 8px}.sheet p{line-height:1.45;color:var(--muted)}
+    .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));z-index:100;transform:translate(-50%,20px);opacity:0;pointer-events:none;background:#20302c;color:#fff;padding:11px 16px;border-radius:999px;font-weight:750;transition:.2s;max-width:90%;text-align:center}
+    .toast.show{opacity:1;transform:translate(-50%,0)}
+
+    /* Sudoku */
+    .sudoku{display:grid;grid-template-columns:repeat(9,1fr);width:520px;aspect-ratio:1;margin:auto;border:3px solid var(--ink);background:var(--ink);gap:1px}
+    .sudoku-cell{position:relative;display:grid;place-items:center;border:0;background:white;font-size:30px;font-weight:650;padding:0;min-width:34px}
+    .sudoku-cell:nth-child(3n){border-right:2px solid var(--ink)}
+    .sudoku-cell:nth-child(9n){border-right:0}
+    .sudoku-cell.block-bottom{border-bottom:2px solid var(--ink)}
+    .sudoku-cell.fixed{background:#eef3f1;font-weight:900;color:var(--ink)}
+    .sudoku-cell.selected{background:#dcefe8;outline:3px solid var(--accent);z-index:2}
+    .sudoku-cell.related{background:#f2f8f6}
+    .sudoku-cell.wrong{color:var(--danger);background:#fff0f0}
+
+    /* Word search */
+    .word-grid{display:grid;gap:3px;margin:auto;width:max-content;padding:4px;user-select:none}
+    .word-cell{width:34px;height:34px;border:1px solid #d5e0dc;background:#fff;border-radius:7px;font-weight:850;font-size:16px;padding:0}
+    .word-cell.trace{background:#ffe9a9;border-color:#d9ad43}
+    .word-cell.found{background:#cfeada;border-color:#6aaf8a;color:#174d36}
+    .word-list{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-top:12px}
+    .word-chip{padding:6px 9px;border-radius:999px;background:#eef4f2;border:1px solid var(--line);font-weight:750;font-size:13px}
+    .word-chip.found{text-decoration:line-through;color:var(--muted);background:#e4f3ea}
+
+    /* Maze */
+    #mazeCanvas{display:block;width:700px;height:700px;max-width:none;margin:auto;background:white;touch-action:none;border-radius:10px}
+    .maze-pad{display:grid;grid-template-columns:repeat(3,58px);grid-template-rows:repeat(2,58px);gap:7px;justify-content:center;margin-top:14px}
+    .maze-pad button{border:1px solid var(--line);background:white;border-radius:15px;font-size:24px;font-weight:900}
+    .maze-pad .up{grid-column:2}.maze-pad .left{grid-column:1;grid-row:2}.maze-pad .down{grid-column:2;grid-row:2}.maze-pad .right{grid-column:3;grid-row:2}
+
+    /* Scramble/riddle/trivia */
+    .prompt-card{padding:18px;border-radius:18px;background:#f6faf8;border:1px solid var(--line);text-align:center}
+    .prompt-card .big{font-size:clamp(27px,8vw,42px);letter-spacing:5px;font-weight:900;color:var(--accent-dark);word-break:break-word}
+    .prompt-card .question{font-size:20px;line-height:1.45;font-weight:750}
+    .riddle-story{font-size:17px;line-height:1.55;text-align:left;color:var(--ink)}
+    .riddle-question{margin-top:14px;padding-top:14px;border-top:1px solid var(--line);font-size:20px;line-height:1.4;font-weight:850;text-align:left}
+    .answer-input{display:block;width:100%;min-height:52px;margin-top:12px;border:2px solid var(--line);border-radius:14px;padding:10px 13px;font-size:20px;text-align:center;text-transform:uppercase}
+    .letter-tiles{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px}
+    .letter-tiles button{width:47px;height:50px;border:1px solid var(--line);border-radius:12px;background:#fff;font-size:20px;font-weight:900}
+    .choice-list{display:grid;gap:9px;margin-top:13px}
+    .choice{min-height:52px;border:1px solid var(--line);background:white;border-radius:14px;padding:11px 13px;text-align:left;font-weight:750}
+    .choice.correct{background:#def2e6;border-color:#73b891;color:#164c33}
+    .choice.incorrect{background:#fde4e4;border-color:#d38a8a;color:#7c2424}
+    .score-row{display:flex;justify-content:space-between;gap:8px;color:var(--muted);font-weight:750;margin-bottom:10px}
+
+    /* Crossword */
+    .crossword-wrap{display:flex;flex-direction:column;gap:14px}
+    .crossword{display:grid;gap:1px;background:#1f2c28;border:3px solid #1f2c28;width:max-content;margin:auto}
+    .cw-cell{position:relative;width:38px;height:38px;background:white}
+    .cw-cell.block{background:#1f2c28}
+    .cw-cell input{position:absolute;inset:0;width:100%;height:100%;border:0;background:transparent;text-align:center;text-transform:uppercase;font-size:22px;font-weight:850;padding:7px 0 0;outline:0}
+    .cw-cell.active{background:#d9eee6}
+    .cw-cell.word-active{background:#eef8f4}
+    .cw-cell.wrong{background:#ffe5e5}
+    .cw-num{position:absolute;left:2px;top:1px;font-size:9px;font-weight:850;z-index:2;pointer-events:none}
+    .clue-columns{display:grid;grid-template-columns:1fr;gap:10px}
+    .clue-box{border:1px solid var(--line);border-radius:14px;padding:10px;background:#fafcfb}
+    .clue-box h4{margin:0 0 7px;color:var(--accent-dark)}
+    .clue-item{padding:7px;border-radius:9px;font-size:14px;line-height:1.3}
+    .clue-item.active{background:var(--accent-soft);font-weight:750}
+
+    /* Cryptogram */
+    .crypto-quote{display:flex;flex-wrap:wrap;gap:8px 12px;justify-content:center;padding:12px 4px}
+    .crypto-word{display:flex;gap:2px}
+    .crypto-letter{width:29px;height:50px;border:0;background:transparent;padding:0;display:grid;grid-template-rows:28px 18px;place-items:center;border-bottom:2px solid var(--ink);border-radius:5px}
+    .crypto-letter .guess{font-size:19px;font-weight:900;color:var(--accent)}
+    .crypto-letter .cipher{font-size:12px;font-weight:800;color:var(--muted)}
+    .crypto-letter.selected{background:#dff1ea;outline:2px solid var(--accent)}
+    .crypto-punc{display:flex;align-items:end;padding-bottom:4px;font-weight:900}
+    .alpha-pad{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:13px}
+    .alpha-pad button{min-height:43px;border:1px solid var(--line);background:#fff;border-radius:10px;font-weight:850}
+
+    /* Logic Grid */
+    .logic-story{margin-bottom:12px}
+    .logic-clues{margin:8px 0 0;padding-left:23px;line-height:1.5}
+    .logic-grid-stack{display:grid;gap:14px;margin-top:14px}
+    .logic-matrix{border:1px solid var(--line);border-radius:16px;padding:10px;background:#fbfdfc;overflow:hidden}
+    .logic-matrix h4{margin:0 0 8px;font-size:15px;color:var(--accent-dark)}
+    .logic-table{display:grid;gap:2px;width:100%;align-items:stretch}
+    .logic-corner,.logic-col,.logic-row{display:flex;align-items:center;justify-content:center;min-width:0;min-height:38px;padding:3px;font-size:10px;font-weight:850;text-align:center;line-height:1.1;color:var(--ink)}
+    .logic-row{justify-content:flex-start;font-size:12px;padding-left:5px}
+    .logic-cell{min-width:0;min-height:42px;border:1px solid #cfdbd7;background:white;border-radius:7px;font-size:22px;font-weight:900;line-height:1;padding:0}
+    .logic-cell.x{color:#9a4b4b;background:#fff3f3}
+    .logic-cell.o{color:var(--good);background:#e4f4ea;border-color:#86bca0}
+    .logic-key{display:flex;justify-content:center;gap:14px;margin-top:10px;color:var(--muted);font-size:13px;font-weight:750}
+    .logic-key b{font-size:18px;color:var(--ink)}
+
+    /* Nonogram */
+    .nonogram-shell{display:grid;width:max-content;margin:auto;grid-template-columns:auto auto;grid-template-rows:auto auto;gap:3px}
+    .nono-corner{grid-column:1;grid-row:1}
+    .nono-col-clues{grid-column:2;grid-row:1;display:grid}
+    .nono-row-clues{grid-column:1;grid-row:2;display:grid}
+    .nono-grid{grid-column:2;grid-row:2;display:grid;gap:1px;background:#75827e;border:2px solid #75827e}
+    .nono-col-clue,.nono-row-clue{display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:850;color:var(--ink)}
+    .nono-col-clue{width:32px;min-height:46px;flex-direction:column;justify-content:end;padding-bottom:3px}
+    .nono-row-clue{height:32px;min-width:52px;justify-content:end;padding-right:5px;gap:3px}
+    .nono-cell{width:32px;height:32px;border:0;background:white;position:relative;padding:0}
+    .nono-cell.filled{background:var(--accent)}
+    .nono-cell.marked::before,.nono-cell.marked::after{content:"";position:absolute;left:5px;right:5px;top:15px;height:2px;background:#9aa7a3;transform:rotate(45deg)}
+    .nono-cell.marked::after{transform:rotate(-45deg)}
+    .nono-cell.wrong{outline:3px solid #d76b6b;z-index:2}
+
+    @media(min-width:620px){
+      .game-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+      .clue-columns{grid-template-columns:1fr 1fr}
+    }
+    @media(max-width:380px){
+      .screen{padding:12px}.game-grid{gap:9px}.game-card{padding:12px;min-height:124px}.word-cell{width:30px;height:30px}.cw-cell{width:34px;height:34px}
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">🧩</div>
+      <div><h1>Puzzler</h1><small>Fresh puzzles, made for your phone</small></div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="homeBtn" aria-label="Home" title="Home">⌂</button>
+      <button class="icon-btn" id="infoBtn" aria-label="About" title="About">?</button>
+    </div>
+  </header>
+
+  <main id="homeScreen" class="screen active">
+
+    <div class="section-title"><h3>Choose a puzzle</h3><span>Tap any room</span></div>
+    <div class="game-grid" id="gameGrid"></div>
+
+    <p class="footer-note">
+      Word expansion uses the <a href="https://www.datamuse.com/api/" target="_blank" rel="noopener">Datamuse API</a> when online.
+      Trivia uses <a href="https://opentdb.com/" target="_blank" rel="noopener">Open Trivia DB</a> under CC BY-SA 4.0.
+      Every game also has an offline fallback.
+    </p>
+  </main>
+
+  <main id="playScreen" class="screen">
+    <div class="play-head">
+      <button class="icon-btn" id="backBtn" aria-label="Back">‹</button>
+      <div class="play-title"><h2 id="gameTitle">Puzzle</h2><p id="gameSubtitle">Freshly generated</p></div>
+    </div>
+    <div class="tool-row">
+      <select id="playDifficulty" aria-label="Difficulty">
+        <option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option>
+      </select>
+      <button class="primary-btn" id="newBtn">New puzzle</button>
+      <button class="small-btn" id="hintBtn">Hint</button>
+      <button class="small-btn" id="checkBtn">Check</button>
+    </div>
+    <section class="game-panel">
+      <div id="gameArea"></div>
+      <div id="extraControls"></div>
+      <div id="status" class="status"></div>
+    </section>
+  </main>
+</div>
+
+<div class="overlay" id="infoOverlay" role="dialog" aria-modal="true">
+  <div class="sheet">
+    <h3>Puzzler</h3>
+    <p>This first version makes puzzles directly in the browser. Sudoku, mazes, nonograms, cryptograms, full logic grids, and layouts are generated locally. Crosswords use curated clues for each difficulty. Word finds and scrambles can quietly add new vocabulary from Datamuse when online. Trivia loads batches from Open Trivia DB and keeps a local played-question history.</p>
+    <p>Each puzzle board starts zoomed all the way out so the full board fits like a page in a book. You can pinch inside the puzzle area to zoom that board, while the rest of the page scrolls normally. Progress and no-repeat history stay on this device.</p>
+    <button class="primary-btn" id="closeInfoBtn">Got it</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  "use strict";
+
+  const $ = (q, root=document) => root.querySelector(q);
+  const $$ = (q, root=document) => [...root.querySelectorAll(q)];
+  const STORAGE = {
+    difficulty: "puzzlerDifficulty",
+    history: "puzzlerHistoryV1",
+    stats: "puzzlerStatsV1",
+    wordCache: "puzzlerWordCacheV1",
+    triviaToken: "puzzlerTriviaTokenV1",
+    triviaSeen: "puzzlerTriviaSeenV1"
+  };
+
+  const GAMES = [
+    {id:"sudoku", icon:"🔢", title:"Sudoku", desc:"Classic number logic with touch keypad.", meta:"Endless generator"},
+    {id:"crossword", icon:"✚", title:"Crossword", desc:"Clear themed clues with true easy, medium, and hard levels.", meta:"Curated clue levels"},
+    {id:"wordsearch", icon:"🔎", title:"Word Find", desc:"Drag through themed hidden words.", meta:"New layouts"},
+    {id:"maze", icon:"🌀", title:"Mazes", desc:"Swipe or use arrows to reach the flag.", meta:"Perfect mazes"},
+    {id:"nonogram", icon:"▦", title:"Nonogram", desc:"Reveal a pixel picture from number clues.", meta:"Generated art"},
+    {id:"scramble", icon:"🔀", title:"Word Scramble", desc:"Unscramble words using clues and tiles.", meta:"Themed words"},
+    {id:"cryptogram", icon:"🔐", title:"Cryptogram", desc:"Crack a substitution cipher quote.", meta:"Fresh ciphers"},
+    {id:"logic", icon:"🧠", title:"Logic Grid", desc:"Mark X and O to match people, places, and things.", meta:"Unique solutions"},
+    {id:"riddle", icon:"💡", title:"Riddles", desc:"Mini story puzzles that reward careful reasoning.", meta:"Reason it out"},
+    {id:"trivia", icon:"🏆", title:"Trivia", desc:"Categories, difficulty, streaks, and scores.", meta:"Thousands online"}
+  ];
+
+  const THEMES = {
+    nature:[
+      ["FOREST","A large area filled with trees"],["RIVER","Flowing natural water"],["MEADOW","An open grassy field"],["CANYON","A deep valley with steep sides"],["OCEAN","A vast body of salt water"],
+      ["THUNDER","The sound following lightning"],["BREEZE","A gentle wind"],["PEBBLE","A small smooth stone"],["SUNSET","The sun disappearing below the horizon"],["ISLAND","Land surrounded by water"],
+      ["VALLEY","Low land between hills"],["WILLOW","A tree with long flexible branches"],["CLOUD","A visible mass of water droplets in the sky"],["MOSS","A small green plant forming soft mats"],["TRAIL","A path through the outdoors"],
+      ["POND","A small body of still water"],["MAPLE","A tree known for winged seeds"],["CORAL","A hard sea structure made by tiny animals"],["RAINBOW","Colored bands seen after rain"],["STREAM","A small flowing waterway"],
+      ["FLOWER","The blooming part of a plant"],["GARDEN","A place where plants are grown"],["MOUNTAIN","Very high land with steep sides"],["WATERFALL","Water dropping over a cliff"],["LIGHTNING","A bright electrical flash in a storm"]
+    ],
+    animals:[
+      ["OTTER","A playful swimming mammal"],["BADGER","A burrowing mammal with facial stripes"],["RABBIT","A long-eared hopping animal"],["FALCON","A fast bird of prey"],["TURTLE","A reptile with a shell"],
+      ["PANDA","A black-and-white bamboo eater"],["DOLPHIN","An intelligent ocean mammal"],["GECKO","A small climbing lizard"],["BISON","A large shaggy grazing animal"],["PARROT","A colorful bird that can mimic sounds"],
+      ["WOMBAT","A sturdy Australian marsupial"],["MOOSE","A large deer with broad antlers"],["LEMUR","A primate from Madagascar"],["PENGUIN","A flightless seabird"],["JAGUAR","A spotted big cat of the Americas"],
+      ["KOALA","A tree-dwelling Australian marsupial"],["TIGER","A striped big cat"],["MONKEY","A clever tree-climbing primate"],["GIRAFFE","The tallest living land animal"],["ELEPHANT","A large mammal with a trunk"],
+      ["HAMSTER","A small pet rodent"],["SQUIRREL","A bushy-tailed tree climber"],["CHEETAH","The fastest land animal"],["GORILLA","A powerful great ape"],["BUTTERFLY","An insect with colorful wings"]
+    ],
+    food:[
+      ["WAFFLE","A breakfast food with a grid pattern"],["NOODLE","A long thin strip of pasta"],["BISCUIT","A small baked bread"],["AVOCADO","A green fruit with a large pit"],["CINNAMON","A warm brown spice"],
+      ["PRETZEL","A twisted baked snack"],["MUFFIN","A small quick bread baked in a cup"],["PEPPER","A seasoning or crunchy vegetable"],["APRICOT","A small orange stone fruit"],["PANCAKE","A flat breakfast cake"],
+      ["COCONUT","A large tropical fruit with a hard shell"],["CHERRY","A small round red fruit"],["CHEDDAR","A popular firm cheese"],["BROWNIE","A dense chocolate square"],["SPINACH","A leafy green vegetable"],
+      ["TORTILLA","A thin flatbread"],["BANANA","A curved yellow fruit"],["CARROT","A crunchy orange root"],["PIZZA","A baked flatbread with toppings"],["COOKIE","A small sweet baked treat"],
+      ["PASTA","Food made from flour and water"],["SALAD","A mix of vegetables or fruit"],["POPCORN","A puffed corn snack"],["SANDWICH","Food held between slices of bread"],["STRAWBERRY","A red fruit with seeds on the outside"]
+    ],
+    travel:[
+      ["PASSPORT","A document used for international travel"],["TICKET","Proof of permission to ride or enter"],["COMPASS","A tool that points north"],["JOURNEY","The act of traveling from one place to another"],["SUITCASE","A travel container for clothing"],
+      ["STATION","A regular stopping place for trains or buses"],["HARBOR","A sheltered place for boats"],["BRIDGE","A structure carrying a path over an obstacle"],["VILLAGE","A small community"],["HIGHWAY","A major public road"],
+      ["TRAIL","A marked route or path"],["CABIN","A small simple house"],["ROUTE","A chosen way from one place to another"],["VOYAGE","A long trip, often by sea"],["HOTEL","A place that rents rooms to travelers"],
+      ["AIRPORT","A place where airplanes arrive and leave"],["CRUISE","A vacation taken on a ship"],["CAMPER","A vehicle or person used for camping"],["BACKPACK","A bag carried on the back"],["BEACH","Sandy land beside water"],
+      ["ISLAND","Land surrounded by water"],["BICYCLE","A two-wheeled vehicle powered by pedals"],["SUBWAY","An underground city train"],["FERRY","A boat that carries people or vehicles"],["LUGGAGE","Bags taken on a trip"]
+    ],
+    space:[
+      ["PLANET","A large body orbiting a star"],["COMET","An icy object that grows a tail near the sun"],["GALAXY","A huge collection of stars"],["ROCKET","A vehicle propelled by exhaust"],["ORBIT","A curved path around another object"],
+      ["NEBULA","A cloud of gas and dust in space"],["METEOR","A streak of light from a space rock"],["SATURN","The ringed planet"],["LUNAR","Relating to the moon"],["ASTEROID","A rocky body orbiting the sun"],
+      ["ECLIPSE","When one space body blocks another"],["COSMOS","The universe as an ordered whole"],["CRATER","A bowl-shaped hollow from an impact"],["GRAVITY","The force that pulls masses together"],["STARLIGHT","Light arriving from stars"],
+      ["MOONLIGHT","Light reflected from the moon"],["TELESCOPE","A tool for viewing distant objects"],["ASTRONAUT","A person trained to travel in space"],["SPACESHIP","A vehicle made for space travel"],["MERCURY","The planet closest to the sun"],
+      ["JUPITER","The largest planet in our solar system"],["VENUS","The bright planet next to Earth"],["EARTH","Our home planet"],["MARS","The red planet"],["UNIVERSE","All space, matter, and energy"]
+    ]
+  };
+
+  const CROSSWORD_THEMES = {
+    animals:[
+      ["CAT","A pet that meows","A small domestic feline","The household member of Felis catus"],
+      ["DOG","A pet that barks","A loyal domestic canine","A domesticated descendant of the wolf"],
+      ["ANT","A tiny insect in a colony","An insect that follows scent trails","A social insect in the family Formicidae"],
+      ["BEAR","A large furry animal","A heavy mammal that may hibernate","An ursid with an exceptional sense of smell"],
+      ["BIRD","An animal with feathers","A warm-blooded animal with wings","A feathered member of class Aves"],
+      ["FROG","A jumping animal that says ribbit","An amphibian with powerful back legs","A tailless amphibian of the order Anura"],
+      ["HORSE","An animal people ride","A hoofed farm animal","A domesticated equine"],
+      ["MOUSE","A tiny animal with a long tail","A small rodent that may live near people","A compact rodent known for gnawing incisors"],
+      ["TIGER","A striped big cat","A large orange-and-black feline","Panthera tigris"],
+      ["ZEBRA","A black-and-white striped animal","An African relative of the horse","An equid whose stripe pattern is unique"],
+      ["WHALE","A giant animal that lives in the ocean","A marine mammal that breathes air","A cetacean ranging from belugas to blue whales"],
+      ["SHARK","A fish with rows of teeth","A cartilaginous ocean predator","A fish whose skeleton is made mostly of cartilage"],
+      ["SNAKE","A long animal with no legs","A limbless reptile","A scaled reptile of the suborder Serpentes"],
+      ["OTTER","A playful swimming mammal","A sleek mammal that often floats on its back","A mustelid adapted to life in water"],
+      ["PANDA","A black-and-white bamboo eater","A bear native to China","Ailuropoda melanoleuca"],
+      ["RABBIT","A long-eared hopping animal","A burrowing mammal with powerful hind legs","A lagomorph, not a rodent"],
+      ["MONKEY","A tree-climbing primate","A primate usually known for agility and a tail","A simian outside the ape group"],
+      ["EAGLE","A large bird of prey","A strong raptor with excellent eyesight","A broad-winged accipitrid"],
+      ["TURTLE","A reptile with a shell","A slow-moving shelled reptile","A member of the order Testudines"],
+      ["DOLPHIN","A smart ocean mammal","A social cetacean known for clicks and whistles","A toothed whale with sophisticated echolocation"]
+    ],
+    food:[
+      ["EGG","A breakfast food from a chicken","A shell-covered food rich in protein","An oval reproductive structure used in many recipes"],
+      ["PIE","A baked dish with a crust","A dessert or savory filling inside pastry","A filled pastry with a top, bottom, or both crusts"],
+      ["RICE","Small grains often served with dinner","A staple grain eaten around the world","The edible seed of Oryza sativa"],
+      ["SOUP","A hot meal eaten with a spoon","A liquid dish made by simmering ingredients","A broth-based preparation that may be clear or thick"],
+      ["TACO","A folded tortilla with filling","A Mexican dish served in a tortilla","A handheld tortilla dish with countless regional forms"],
+      ["BREAD","A baked loaf made from dough","A staple food made with flour and liquid","A fermented or unleavened product made from cereal flour"],
+      ["APPLE","A crisp fruit that may be red or green","A tree fruit with a seeded core","The pomaceous fruit of Malus domestica"],
+      ["PASTA","Noodles such as spaghetti or penne","Food made from flour dough and shaped many ways","An Italian staple traditionally made from durum wheat"],
+      ["CHEESE","A dairy food used on pizza","A food made by curdling milk","A cultured dairy product separated into curds and whey"],
+      ["GRAPE","A small fruit that grows in bunches","A vine fruit used fresh, dried, or pressed","The berry of a plant in the genus Vitis"],
+      ["PEACH","A fuzzy orange-pink fruit","A sweet stone fruit with soft flesh","A drupe produced by Prunus persica"],
+      ["SALAD","A bowl of mixed vegetables","A cold dish of mixed ingredients","A preparation whose components are tossed with dressing"],
+      ["WAFFLE","A breakfast food with square pockets","A batter cake cooked between patterned plates","A gridded quick bread whose pockets hold toppings"],
+      ["COOKIE","A small sweet baked treat","A hand-sized baked dessert","A flour-based confection also called a biscuit in Britain"],
+      ["CARROT","A crunchy orange vegetable","An edible root often eaten raw or cooked","The taproot of Daucus carota"],
+      ["BANANA","A curved yellow fruit","A soft tropical fruit that grows in hands","A berry produced by a large herb in the genus Musa"],
+      ["MUFFIN","A small cake-shaped quick bread","A single-serving baked quick bread","A chemically leavened bread baked in a cup"],
+      ["CHERRY","A small red fruit with a pit","A sweet or tart stone fruit","A drupe from trees in the genus Prunus"],
+      ["NOODLE","A long strip of cooked dough","A pasta-like strand used in many cuisines","A shaped, unleavened dough product boiled in liquid"],
+      ["PIZZA","A round baked food with toppings","A topped flatbread associated with Italy","A leavened flatbread traditionally baked at high heat"]
+    ],
+    nature:[
+      ["SUN","The star we see in daytime","The star at the center of our solar system","The G-type main-sequence star nearest Earth"],
+      ["RAIN","Water falling from clouds","Liquid precipitation","Atmospheric water droplets large enough to reach the ground"],
+      ["TREE","A tall plant with a trunk","A woody plant with branches","A perennial plant with an elongated stem"],
+      ["LAKE","Water surrounded by land","A large inland body of standing water","A lentic body of water occupying a basin"],
+      ["RIVER","Water that flows toward a lake or sea","A natural stream flowing in a channel","A fluvial system draining a watershed"],
+      ["CLOUD","A white or gray shape in the sky","A visible group of tiny water droplets","An atmospheric aerosol of condensed water or ice"],
+      ["STORM","Wild weather with wind or rain","A strong disturbance in the atmosphere","A meteorological event marked by severe atmospheric conditions"],
+      ["OCEAN","A huge body of salt water","One of Earth's largest connected saltwater areas","The global body covering most of Earth's surface"],
+      ["FOREST","A large area filled with trees","An ecosystem dominated by trees","A biome with a continuous or dense tree canopy"],
+      ["FLOWER","The colorful part of many plants","The reproductive bloom of a plant","The seed-bearing structure of an angiosperm"],
+      ["BREEZE","A gentle wind","A light current of moving air","A low-speed flow caused by pressure differences"],
+      ["MEADOW","An open grassy field","Grassland often used for hay or grazing","A field ecosystem dominated by grasses and wildflowers"],
+      ["VALLEY","Low land between hills","A long depression between higher ground","A landform commonly shaped by rivers or glaciers"],
+      ["CANYON","A deep valley with steep sides","A gorge often carved by a river","A deeply incised valley cut into rock"],
+      ["ISLAND","Land surrounded by water","A piece of land smaller than a continent","A terrestrial area isolated by surrounding water"],
+      ["MOUNTAIN","Very high land with steep sides","A large natural rise of Earth's surface","A major landform created by tectonic or volcanic forces"],
+      ["THUNDER","The loud sound after lightning","A sound wave caused by rapidly heated air","The acoustic shock produced by lightning's thermal expansion"],
+      ["PEBBLE","A small smooth stone","A rounded rock larger than a grain of sand","A clast measuring roughly 4 to 64 millimeters"],
+      ["WILLOW","A tree with long flexible branches","A moisture-loving tree with narrow leaves","A tree or shrub of the genus Salix"],
+      ["SUNSET","The evening disappearance of the sun","The time the sun drops below the horizon","The daily solar descent beneath the local horizon"]
+    ],
+    travel:[
+      ["MAP","A picture that shows places","A drawing used to find locations","A symbolic representation of spatial relationships"],
+      ["BUS","A large vehicle for many passengers","A road vehicle that follows a public route","A shared motor vehicle used for mass transit"],
+      ["TAXI","A car you pay to ride in","A hired car with a driver","A metered vehicle offering point-to-point transport"],
+      ["TRAIN","A line of rail cars","A vehicle that runs on railroad tracks","A coupled series of rail vehicles"],
+      ["PLANE","A vehicle that flies","An aircraft with fixed wings","A powered fixed-wing aircraft"],
+      ["HOTEL","A place that rents rooms","Temporary lodging for travelers","A commercial establishment providing short-term accommodation"],
+      ["BEACH","Sandy land beside water","A shore covered with sand or pebbles","A depositional landform along a body of water"],
+      ["TICKET","A pass used to ride or enter","Proof that a fare or admission was paid","A document granting a holder access or transportation"],
+      ["ROUTE","The way from one place to another","A planned path for a trip","A selected course connecting an origin and destination"],
+      ["BRIDGE","A structure that crosses a gap","A path built over water, roads, or valleys","A load-bearing span connecting separated points"],
+      ["HARBOR","A sheltered place for boats","Protected water where vessels can anchor","A coastal refuge offering safe mooring"],
+      ["CABIN","A small simple house","A compact room or rural shelter","A modest enclosed structure or private ship compartment"],
+      ["PASSPORT","A booklet used for international travel","An official document proving identity and nationality","A government credential permitting international passage"],
+      ["SUITCASE","A case used to carry clothing","A rectangular travel bag with a handle","Portable luggage designed for packed garments"],
+      ["STATION","A place where trains or buses stop","A regular transportation stopping point","A facility serving scheduled passenger transport"],
+      ["JOURNEY","A trip from one place to another","The act or experience of traveling","A passage between locations, literal or figurative"],
+      ["VOYAGE","A long trip, often by sea","An extended journey over water or through space","A protracted passage to a distant destination"],
+      ["CAMPER","A person or vehicle used for camping","Someone staying outdoors or a recreational vehicle","A traveler using temporary outdoor shelter"],
+      ["TRAIL","A path through the outdoors","A marked route for walking or riding","A narrow course worn or constructed across terrain"],
+      ["CRUISE","A vacation trip on a ship","A pleasure voyage with several stops","A recreational sea journey aboard a passenger vessel"]
+    ],
+    space:[
+      ["SUN","The star that lights Earth","The star at the center of our solar system","A G-type main-sequence star containing most solar-system mass"],
+      ["MOON","The object that circles Earth","Earth's natural satellite","A tidally locked satellite formed early in Earth's history"],
+      ["STAR","A bright point in the night sky","A huge glowing ball of gas","A self-luminous sphere sustained by nuclear fusion"],
+      ["MARS","The red planet","The fourth planet from the sun","A terrestrial planet rich in iron oxides"],
+      ["COMET","An icy space object with a tail","A small body that brightens near the sun","A volatile-rich body whose coma forms near perihelion"],
+      ["ORBIT","A path around a planet or star","The curved course of one body around another","A gravitationally bound trajectory around a mass"],
+      ["ROCKET","A vehicle that blasts into space","A craft propelled by high-speed exhaust","A reaction engine vehicle carrying its own propellant"],
+      ["PLANET","A large world that circles a star","A nearly round body orbiting a star","A body that has cleared most objects from its orbital neighborhood"],
+      ["GALAXY","A huge group of stars","A system containing stars, gas, dust, and dark matter","A gravitationally bound stellar system"],
+      ["SATURN","The planet with famous rings","The sixth planet from the sun","A gas giant with a complex ring system"],
+      ["METEOR","A streak of light from a space rock","The flash made when a meteoroid enters air","The luminous atmospheric path of incoming debris"],
+      ["CRATER","A bowl-shaped hole on a moon or planet","A round depression made by an impact","A circular landform produced by collision or eruption"],
+      ["ECLIPSE","When one space object blocks another","An event in which light from a body is hidden","An alignment that places one celestial body in another's shadow"],
+      ["NEBULA","A cloud of gas and dust in space","An interstellar cloud where stars may form","A diffuse astronomical region of ionized gas or dust"],
+      ["GRAVITY","The force that pulls things together","The attraction between objects with mass","The curvature of spacetime produced by mass-energy"],
+      ["ASTEROID","A rocky object orbiting the sun","A small solar-system body larger than a meteoroid","A minor planet, many of which occupy the main belt"],
+      ["COSMOS","Another word for the universe","The universe viewed as an ordered whole","The totality of space, time, matter, and energy"],
+      ["LUNAR","Having to do with the moon","Relating to Earth's natural satellite","Pertaining to Luna or its cycles"],
+      ["VENUS","The bright planet near Earth","The second planet from the sun","A cloud-covered terrestrial world with runaway greenhouse heating"],
+      ["EARTH","The planet where we live","The third planet from the sun","The only known world with surface oceans and life"]
+    ]
+  };
+
+  const RIDDLES = [
+    {story:"Lena lives on the twentieth floor. Every morning she rides the elevator down. Coming home, she usually rides only to the twelfth floor and walks the rest. On rainy days she rides all the way to twenty.",question:"Why does the rain change what she does?",accept:["short","too short","cannot reach","umbrella"],answer:"Lena is too short to reach the twentieth-floor button. On rainy days she uses her umbrella to press it.",hint:"Think about what she carries on a rainy day."},
+    {story:"Outside a closed room are three switches. Inside is one ordinary light bulb. Only one switch controls it, and you may enter the room only once.",question:"How can you identify the correct switch?",accept:["heat","warm","turn one on","leave it on"],answer:"Turn on switch one for a few minutes, turn it off, then turn on switch two. Enter the room: a lit bulb means switch two, a warm dark bulb means switch one, and a cold dark bulb means switch three.",hint:"A bulb can give you more information than just light."},
+    {story:"A farmer must cross a river with a fox, a chicken, and a bag of grain. The boat carries the farmer and only one item. The fox cannot be left with the chicken, and the chicken cannot be left with the grain.",question:"What sequence gets everyone across safely?",accept:["chicken first","take chicken","fox back","grain back"],answer:"Take the chicken across, return alone, take the fox across, bring the chicken back, take the grain across, return alone, then take the chicken across.",hint:"The chicken has to make more than one trip."},
+    {story:"Three closed boxes are labeled APPLES, ORANGES, and MIXED. Every label is wrong. You may take one fruit from one box without looking inside.",question:"How can you label all three boxes correctly?",accept:["mixed box","take from mixed","label mixed"],answer:"Take one fruit from the box labeled MIXED. Because every label is wrong, that box contains only the fruit you picked. The remaining two labels can then be fixed by elimination.",hint:"Start with the box whose label gives you the most information."},
+    {story:"Two children were born at the same hour, on the same day, in the same year, to the same parents, but they are not twins.",question:"How is that possible?",accept:["triplets","three children","quadruplets"],answer:"They are part of a set of triplets or another multiple birth.",hint:"The story never says there were only two children."},
+    {story:"A doctor gives Maya three pills and tells her to take one every thirty minutes.",question:"How long will it take Maya to take all three pills?",accept:["one hour","60 minutes","1 hour"],answer:"One hour. She takes the first immediately, the second after thirty minutes, and the third after sixty minutes.",hint:"Do not wait before taking the first pill."},
+    {story:"A farmer has seventeen sheep. All but nine wander away.",question:"How many sheep remain?",accept:["nine","9"],answer:"Nine sheep remain. 'All but nine' means nine did not leave.",hint:"Read the words 'all but nine' carefully."},
+    {story:"A clock takes five seconds to strike six times.",question:"At the same speed, how long will it take to strike twelve times?",accept:["11 seconds","eleven seconds","11"],answer:"Eleven seconds. Six strikes have five gaps; twelve strikes have eleven gaps.",hint:"Time the spaces between strikes, not the strikes themselves."},
+    {story:"You are in a dark room with a candle, an oil lamp, a fireplace, and one match.",question:"What do you light first?",accept:["match","the match"],answer:"The match must be lit first.",hint:"None of the other items can start without it."},
+    {story:"One door leads outside and one leads to a trap. One guard always tells the truth and the other always lies. You may ask one guard one question.",question:"What should you ask to find the safe door?",accept:["other guard","which door would the other","opposite door"],answer:"Ask either guard, 'Which door would the other guard say is safe?' Then choose the opposite door.",hint:"Make both guards point to the same wrong door."},
+    {story:"You have two ropes. Each rope takes exactly sixty minutes to burn, but neither burns at a steady rate.",question:"How can you measure exactly forty-five minutes?",accept:["both ends","30 minutes","light one rope at both ends"],answer:"Light rope one at both ends and rope two at one end. Rope one finishes in thirty minutes. Then light the other end of rope two; its remaining portion burns in fifteen minutes.",hint:"Lighting both ends cuts a rope's total burn time in half even if it burns unevenly."},
+    {story:"A person looks at a photograph and says, 'Brothers and sisters I have none, but that person's father is my father's son.'",question:"Who is in the photograph?",accept:["son","his son","their son"],answer:"The photograph shows the speaker's son. 'My father's son' is the speaker.",hint:"Work out who 'my father's son' must be."},
+    {story:"You have a three-liter jug and a five-liter jug, with no measurement marks and unlimited water.",question:"How can you measure exactly four liters?",accept:["fill five","three liter jug","4 liters"],answer:"Fill the five-liter jug and pour into the three-liter jug, leaving two liters. Empty the three-liter jug, pour the two liters into it, refill the five-liter jug, then top off the three-liter jug. Four liters remain in the five-liter jug.",hint:"First create a two-liter amount."},
+    {story:"Four people must cross a bridge at night with one flashlight. Their crossing times are 1, 2, 7, and 10 minutes. At most two cross together, and a pair moves at the slower person's speed.",question:"What is the fastest total time?",accept:["17 minutes","seventeen minutes","17"],answer:"Seventeen minutes: 1 and 2 cross, 1 returns, 7 and 10 cross, 2 returns, then 1 and 2 cross again.",hint:"Use the two fastest people to manage the flashlight."},
+    {story:"Yesterday Nora was twenty-five years old. Next year she will be twenty-eight.",question:"How can both statements be true?",accept:["new year","december 31","january 1","birthday"],answer:"Today is January 1 and Nora's birthday is December 31. She turned twenty-six yesterday, will turn twenty-seven this year, and twenty-eight next year.",hint:"Think about the date as well as her birthday."}
+  ];
+
+  const QUOTES = [
+    "SMALL STEPS CAN STILL CROSS A GREAT DISTANCE.",
+    "A CURIOUS MIND TURNS EVERY DAY INTO A DISCOVERY.",
+    "PATIENCE OFTEN FINDS THE DOOR THAT FORCE MISSES.",
+    "THE BEST PATH IS SOMETIMES THE ONE YOU DRAW YOURSELF.",
+    "A GOOD QUESTION CAN BE MORE USEFUL THAN A QUICK ANSWER.",
+    "CLEAR THINKING BEGINS WHEN WE SLOW DOWN ENOUGH TO NOTICE.",
+    "EVERY PUZZLE LOOKS DIFFERENT AFTER THE FIRST GOOD CLUE.",
+    "PRACTICE DOES NOT MAKE PERFECT BUT IT MAKES PROGRESS VISIBLE.",
+    "WHEN ONE PLAN FAILS A NEW IDEA GETS ROOM TO GROW.",
+    "A CALM MIND CAN HEAR THE QUIET PART OF A PROBLEM.",
+    "THE FINISH LINE IS EASIER TO FIND WHEN YOU ENJOY THE SEARCH.",
+    "BRAVE IDEAS OFTEN BEGIN AS SMALL UNLIKELY THOUGHTS."
+  ];
+
+  const FALLBACK_TRIVIA = [
+    {category:"General",difficulty:"easy",question:"How many sides does a hexagon have?",correct:"6",incorrect:["5","7","8"]},
+    {category:"Science",difficulty:"easy",question:"Which planet is known for its prominent rings?",correct:"Saturn",incorrect:["Mars","Venus","Mercury"]},
+    {category:"Geography",difficulty:"easy",question:"Which ocean borders the west coast of the United States?",correct:"Pacific Ocean",incorrect:["Atlantic Ocean","Indian Ocean","Arctic Ocean"]},
+    {category:"Animals",difficulty:"easy",question:"What is a group of lions called?",correct:"A pride",incorrect:["A school","A pack","A flock"]},
+    {category:"History",difficulty:"medium",question:"Which ancient civilization built Machu Picchu?",correct:"The Inca",incorrect:["The Maya","The Roman Empire","The Vikings"]},
+    {category:"Science",difficulty:"medium",question:"What is the chemical symbol for gold?",correct:"Au",incorrect:["Ag","Gd","Go"]},
+    {category:"Books",difficulty:"medium",question:"Who wrote Frankenstein?",correct:"Mary Shelley",incorrect:["Jane Austen","Louisa May Alcott","Emily Brontë"]},
+    {category:"Math",difficulty:"medium",question:"What is the square root of 144?",correct:"12",incorrect:["10","14","16"]},
+    {category:"Space",difficulty:"hard",question:"What is the name of the boundary around a black hole beyond which light cannot escape?",correct:"Event horizon",incorrect:["Photon belt","Gravity shell","Accretion edge"]},
+    {category:"Language",difficulty:"hard",question:"What is a word that reads the same forward and backward called?",correct:"Palindrome",incorrect:["Anagram","Homophone","Metaphor"]}
+  ];
+
+  const NAMES = ["Ava","Ben","Cora","Dylan","Ella","Finn","Gia","Hugo","Iris","Jude","Kira","Liam"];
+
+  let currentGame = null;
+  let currentState = null;
+  let boardView = null;
+  let toastTimer = null;
+
+  function loadJSON(key, fallback){
+    try{return JSON.parse(localStorage.getItem(key)) ?? fallback;}catch{return fallback;}
+  }
+  function saveJSON(key, value){try{localStorage.setItem(key, JSON.stringify(value));}catch{}}
+  function hashString(str){let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+  function mulberry32(seed){return function(){let t=seed+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
+  function randInt(rng,min,max){return Math.floor(rng()*(max-min+1))+min;}
+  function shuffle(arr,rng=Math.random){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+  function pick(arr,rng=Math.random){return arr[Math.floor(rng()*arr.length)];}
+  function cleanAnswer(s){return String(s||"").toLowerCase().replace(/[^a-z0-9]/g,"");}
+  function titleCase(s){return String(s||"").replace(/(^|\s)\S/g,m=>m.toUpperCase());}
+  function themeCard(theme,direction){return `<div class="helper-card"><div class="theme-line"><span class="theme-label">Theme</span><strong class="theme-name">${titleCase(theme)}</strong></div>${direction?`<div class="direction-line">${direction}</div>`:""}</div>`;}
+  function htmlDecode(s){const t=document.createElement("textarea");t.innerHTML=s;return t.value;}
+  function toast(msg){const el=$("#toast");el.textContent=msg;el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),2200);}
+  function setStatus(msg,type=""){const s=$("#status");s.textContent=msg;s.className="status"+(type?" "+type:"");}
+  function getDifficulty(){return $("#playDifficulty").value || localStorage.getItem(STORAGE.difficulty) || "medium";}
+  function recordPlayed(type,seed){
+    const history=loadJSON(STORAGE.history,{});history[type]=history[type]||[];history[type].push(seed);history[type]=history[type].slice(-500);saveJSON(STORAGE.history,history);
+    const stats=loadJSON(STORAGE.stats,{played:0,completed:0});stats.played++;saveJSON(STORAGE.stats,stats);updateStats();
+  }
+  function recordCompleted(){const stats=loadJSON(STORAGE.stats,{played:0,completed:0});stats.completed++;saveJSON(STORAGE.stats,stats);updateStats();}
+  function uniqueSeed(type){
+    const history=loadJSON(STORAGE.history,{});const seen=new Set(history[type]||[]);let seed;
+    do{seed=(Date.now()+Math.floor(Math.random()*1e9))>>>0;}while(seen.has(seed));
+    return seed;
+  }
+  function updateStats(){const stats=loadJSON(STORAGE.stats,{played:0,completed:0});const el=$("#playedCount");if(el)el.textContent=stats.played||0;}
+
+  function renderHome(){
+    $("#gameGrid").innerHTML=GAMES.map(g=>`<button class="game-card" data-game="${g.id}"><div><div class="game-icon">${g.icon}</div><h4>${g.title}</h4><p>${g.desc}</p></div><div class="game-meta"><span>${g.meta}</span><span>›</span></div></button>`).join("");
+    $$(".game-card").forEach(b=>b.addEventListener("click",()=>openGame(b.dataset.game)));
+  }
+
+  function showHome(){
+    $("#playScreen").classList.remove("active");$("#homeScreen").classList.add("active");currentGame=null;currentState=null;boardView=null;window.scrollTo(0,0);
+  }
+  function openGame(id){
+    currentGame=id;$("#homeScreen").classList.remove("active");$("#playScreen").classList.add("active");
+    const g=GAMES.find(x=>x.id===id);$("#gameTitle").textContent=g.title;$("#gameSubtitle").textContent=g.desc;
+    $("#playDifficulty").value=localStorage.getItem(STORAGE.difficulty)||"medium";updateToolbarForGame();newPuzzle();window.scrollTo(0,0);
+  }
+  function updateToolbarForGame(){
+    const isScramble=currentGame==="scramble";
+    $("#newBtn").style.display=isScramble?"none":"";
+    $("#checkBtn").style.display=isScramble?"none":"";
+  }
+  function makeBoardShell(inner,viewportClass=""){
+    return `<div class="board-stage"><div class="board-viewport ${viewportClass}" id="boardViewport"><div class="board-surface" id="boardSurface">${inner}</div></div></div>`;
+  }
+  function initBoardViewport(){
+    const viewport=$("#boardViewport"),surface=$("#boardSurface");
+    if(!viewport||!surface||!surface.firstElementChild){boardView=null;return;}
+    const board=surface.firstElementChild,pad=12;
+    surface.style.transform='translate(0px,0px) scale(1)';
+    const vw=viewport.clientWidth||320,vh=viewport.clientHeight||320;
+    const bw=board.offsetWidth||board.getBoundingClientRect().width||320;
+    const bh=board.offsetHeight||board.getBoundingClientRect().height||320;
+    const fit=Math.min((vw-pad*2)/bw,(vh-pad*2)/bh,1);
+    boardView={viewport,surface,board,bw,bh,vw,vh,scale:fit,minScale:fit,maxScale:3,x:0,y:0};
+    const clamp=()=>{
+      const sw=boardView.bw*boardView.scale,sh=boardView.bh*boardView.scale;
+      if(sw<=boardView.vw)boardView.x=(boardView.vw-sw)/2;else boardView.x=Math.min(0,Math.max(boardView.vw-sw,boardView.x));
+      if(sh<=boardView.vh)boardView.y=(boardView.vh-sh)/2;else boardView.y=Math.min(0,Math.max(boardView.vh-sh,boardView.y));
+    };
+    const draw=()=>{clamp();surface.style.transform=`translate(${boardView.x}px,${boardView.y}px) scale(${boardView.scale})`;};
+    boardView.clamp=clamp;boardView.draw=draw;
+    boardView.x=(vw-bw*fit)/2;boardView.y=(vh-bh*fit)/2;draw();
+    let pinchStart=null;
+    const getInfo=e=>{
+      const [a,b]=[e.touches[0],e.touches[1]];
+      const center={x:(a.clientX+b.clientX)/2-viewport.getBoundingClientRect().left,y:(a.clientY+b.clientY)/2-viewport.getBoundingClientRect().top};
+      const dist=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);
+      return {center,dist};
+    };
+    viewport.addEventListener('touchstart',e=>{
+      if(e.touches.length===2){
+        const info=getInfo(e);
+        pinchStart={scale:boardView.scale,x:boardView.x,y:boardView.y,dist:info.dist,center:info.center,anchorX:(info.center.x-boardView.x)/boardView.scale,anchorY:(info.center.y-boardView.y)/boardView.scale};
+        e.preventDefault();
+      }
+    },{passive:false});
+    viewport.addEventListener('touchmove',e=>{
+      if(e.touches.length===2&&pinchStart){
+        const info=getInfo(e);
+        boardView.scale=Math.max(boardView.minScale,Math.min(boardView.maxScale,pinchStart.scale*(info.dist/pinchStart.dist||1)));
+        boardView.x=info.center.x-pinchStart.anchorX*boardView.scale;
+        boardView.y=info.center.y-pinchStart.anchorY*boardView.scale;
+        draw();
+        e.preventDefault();
+      }
+    },{passive:false});
+    viewport.addEventListener('touchend',e=>{if(e.touches.length<2)pinchStart=null;});
+  }
+  function newPuzzle(){
+    if(!currentGame)return;
+    setStatus("");$("#gameArea").innerHTML="";$("#extraControls").innerHTML="";
+    const seed=uniqueSeed(currentGame);recordPlayed(currentGame,seed);
+    const builders={sudoku:buildSudoku,crossword:buildCrossword,wordsearch:buildWordSearch,maze:buildMaze,nonogram:buildNonogram,scramble:buildScramble,cryptogram:buildCryptogram,logic:buildLogic,riddle:buildRiddle,trivia:buildTrivia};
+    builders[currentGame](seed);
+  }
+  function showLoading(text="Making a fresh puzzle…"){$("#gameArea").innerHTML=`<div class="prompt-card"><div class="question">${text}</div></div>`;}
+
+  // ---------- Sudoku ----------
+  function makeSudoku(seed,difficulty){
+    const rng=mulberry32(seed),base=3,side=9;
+    const pattern=(r,c)=>(base*(r%base)+Math.floor(r/base)+c)%side;
+    const rBase=[0,1,2];
+    const rows=shuffle(rBase,rng).flatMap(g=>shuffle(rBase,rng).map(r=>g*base+r));
+    const cols=shuffle(rBase,rng).flatMap(g=>shuffle(rBase,rng).map(c=>g*base+c));
+    const nums=shuffle([1,2,3,4,5,6,7,8,9],rng);
+    const solution=rows.flatMap(r=>cols.map(c=>nums[pattern(r,c)]));
+    const puzzle=[...solution];
+    const remove={easy:38,medium:48,hard:56}[difficulty];
+    shuffle([...Array(81).keys()],rng).slice(0,remove).forEach(i=>puzzle[i]=0);
+    return {solution,puzzle,values:[...puzzle],selected:null,seed};
+  }
+  function buildSudoku(seed){currentState=makeSudoku(seed,getDifficulty());renderSudoku();}
+  function renderSudoku(){
+    const st=currentState;
+    $("#gameArea").innerHTML=makeBoardShell(`<div class="sudoku" id="sudokuBoard"></div>`);
+    const board=$("#sudokuBoard");
+    st.values.forEach((v,i)=>{
+      const b=document.createElement("button");b.className="sudoku-cell"+(st.puzzle[i]?" fixed":"")+((Math.floor(i/9)+1)%3===0&&Math.floor(i/9)!==8?" block-bottom":"");
+      b.textContent=v||"";b.dataset.i=i;b.addEventListener("click",()=>selectSudoku(i));board.appendChild(b);
+    });
+    $("#extraControls").innerHTML=`<div class="control-grid">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-num="${n}">${n}</button>`).join("")}<button data-num="0">⌫</button></div>`;
+    $$('[data-num]',$("#extraControls")).forEach(b=>b.addEventListener("click",()=>sudokuInput(+b.dataset.num)));
+    updateSudokuChoices();
+    initBoardViewport();
+  }
+  function sudokuAllowedNumbers(i){
+    if(i==null)return new Set([1,2,3,4,5,6,7,8,9]);
+    const st=currentState,row=Math.floor(i/9),col=i%9,br=Math.floor(row/3)*3,bc=Math.floor(col/3)*3,used=new Set();
+    for(let c=0;c<9;c++){const j=row*9+c;if(j!==i&&st.values[j])used.add(st.values[j]);}
+    for(let r=0;r<9;r++){const j=r*9+col;if(j!==i&&st.values[j])used.add(st.values[j]);}
+    for(let r=br;r<br+3;r++)for(let c=bc;c<bc+3;c++){const j=r*9+c;if(j!==i&&st.values[j])used.add(st.values[j]);}
+    return new Set([1,2,3,4,5,6,7,8,9].filter(n=>!used.has(n)));
+  }
+  function updateSudokuChoices(){
+    const allowed=sudokuAllowedNumbers(currentState?.selected);
+    $$('[data-num]',$("#extraControls")).forEach(b=>{const n=+b.dataset.num;if(!n)return;b.disabled=currentState?.selected==null||!allowed.has(n);b.title=b.disabled?`${n} is already used in this row, column, or box`:"";});
+  }
+  function selectSudoku(i){
+    if(currentState.puzzle[i])return;currentState.selected=i;
+    $$(".sudoku-cell").forEach((c,j)=>{c.classList.toggle("selected",j===i);c.classList.toggle("related",j!==i&&(Math.floor(j/9)===Math.floor(i/9)||j%9===i%9||(Math.floor(Math.floor(j/9)/3)===Math.floor(Math.floor(i/9)/3)&&Math.floor((j%9)/3)===Math.floor((i%9)/3))));});
+    updateSudokuChoices();
+  }
+  function sudokuInput(n){const st=currentState;if(st.selected==null)return toast("Tap an empty square first");st.values[st.selected]=n;const cell=$(`.sudoku-cell[data-i="${st.selected}"]`);cell.textContent=n||"";cell.classList.remove("wrong");updateSudokuChoices();if(st.values.every((v,i)=>v===st.solution[i])){setStatus("Solved! Beautiful work.","good");recordCompleted();}}
+  function sudokuCheck(){let wrong=0;$$(".sudoku-cell").forEach((c,i)=>{const w=currentState.values[i]&&currentState.values[i]!==currentState.solution[i];c.classList.toggle("wrong",!!w);if(w)wrong++;});setStatus(wrong?`${wrong} square${wrong===1?"":"s"} need another look.`:"Everything filled so far is correct.",wrong?"bad":"good");}
+  function sudokuHint(){const st=currentState;let i=st.selected;if(i==null||st.values[i]===st.solution[i])i=st.values.findIndex((v,j)=>v!==st.solution[j]);if(i<0)return;st.values[i]=st.solution[i];const c=$(`.sudoku-cell[data-i="${i}"]`);c.textContent=st.solution[i];c.classList.remove("wrong");selectSudoku(i);updateSudokuChoices();setStatus("One square filled in.");}
+
+  // ---------- Online word expansion ----------
+  async function fetchThemeEntries(theme,needDefinitions=false){
+    const cache=loadJSON(STORAGE.wordCache,{});const key=theme+(needDefinitions?"_defs":"_words");
+    if(cache[key]&&Date.now()-cache[key].time<1000*60*60*24*14)return cache[key].items;
+    try{
+      const url=`https://api.datamuse.com/words?ml=${encodeURIComponent(theme)}&max=250&md=${needDefinitions?"dp":"p"}`;
+      const res=await fetch(url);if(!res.ok)throw new Error("word source unavailable");
+      const data=await res.json();
+      const items=data.filter(x=>/^[a-z]+$/i.test(x.word)&&x.word.length>=4&&x.word.length<=10)
+        .map(x=>[x.word.toUpperCase(),needDefinitions&&x.defs?.length?String(x.defs[0]).replace(/^\w+\t/,""): `A word connected with ${theme}`]);
+      if(items.length){cache[key]={time:Date.now(),items};saveJSON(STORAGE.wordCache,cache);return items;}
+    }catch(e){console.warn(e);}
+    return [];
+  }
+  function baseEntries(theme){return THEMES[theme]||THEMES.nature;}
+
+  // ---------- Word Search ----------
+  async function buildWordSearch(seed){
+    showLoading("Hiding words in a fresh grid…");
+    const rng=mulberry32(seed),theme=pick(Object.keys(THEMES),rng),difficulty=getDifficulty();
+    const online=await fetchThemeEntries(theme,false);const pool=shuffle([...baseEntries(theme),...online],rng).filter(([w])=>w.length>=4);
+    const size={easy:15,medium:18,hard:21}[difficulty],count={easy:15,medium:18,hard:20}[difficulty];
+    const words=[];for(const [w] of pool){if(w.length<=size&&!words.includes(w)){words.push(w);if(words.length===count)break;}}
+    let best=null;for(let attempt=0;attempt<10;attempt++){const candidate=makeWordSearch(seed^(attempt*0x9e3779b9),size,words,theme);if(!best||candidate.placements.length>best.placements.length)best=candidate;if(candidate.placements.length>=count){best=candidate;break;}}
+    currentState=best;renderWordSearch();
+  }
+  function makeWordSearch(seed,size,words,theme){
+    const rng=mulberry32(seed^0x91ab),grid=Array.from({length:size},()=>Array(size).fill(""));
+    const dirs=[[0,1],[1,0],[1,1],[-1,1],[0,-1],[-1,0],[-1,-1],[1,-1]],placements=[];
+    for(const word of words){let placed=false;for(let attempt=0;attempt<250&&!placed;attempt++){
+      const [dr,dc]=pick(dirs,rng),r=randInt(rng,0,size-1),c=randInt(rng,0,size-1),er=r+dr*(word.length-1),ec=c+dc*(word.length-1);
+      if(er<0||er>=size||ec<0||ec>=size)continue;let ok=true;
+      for(let k=0;k<word.length;k++){const ch=grid[r+dr*k][c+dc*k];if(ch&&ch!==word[k]){ok=false;break;}}
+      if(!ok)continue;const cells=[];for(let k=0;k<word.length;k++){grid[r+dr*k][c+dc*k]=word[k];cells.push((r+dr*k)*size+(c+dc*k));}placements.push({word,cells});placed=true;
+    }}
+    const letters="ABCDEFGHIJKLMNOPQRSTUVWXYZ";grid.forEach(row=>row.forEach((x,i)=>{if(!x)row[i]=letters[randInt(rng,0,25)];}));
+    return {grid,size,placements,found:new Set(),start:null,trace:[],theme};
+  }
+  function renderWordSearch(){
+    const st=currentState;
+    $("#gameArea").innerHTML=`${themeCard(st.theme,"Drag from the first letter to the last.")}${makeBoardShell(`<div class="word-grid" id="wordGrid" style="grid-template-columns:repeat(${st.size},34px)"></div>`)}<div class="word-list" id="wordList"></div>`;
+    const grid=$("#wordGrid");st.grid.flat().forEach((ch,i)=>{const b=document.createElement("button");b.className="word-cell";b.textContent=ch;b.dataset.i=i;grid.appendChild(b);});
+    grid.addEventListener("pointerdown",wordPointerDown);grid.addEventListener("pointermove",wordPointerMove);grid.addEventListener("pointerup",wordPointerUp);grid.addEventListener("pointercancel",wordPointerUp);
+    $("#wordList").innerHTML=st.placements.map(p=>`<span class="word-chip" data-word="${p.word}">${p.word}</span>`).join("");
+    initBoardViewport();
+  }
+  function straightLine(a,b,size){const ar=Math.floor(a/size),ac=a%size,br=Math.floor(b/size),bc=b%size,dr=Math.sign(br-ar),dc=Math.sign(bc-ac),rd=Math.abs(br-ar),cd=Math.abs(bc-ac);if(!(ar===br||ac===bc||rd===cd))return[];const len=Math.max(rd,cd)+1;return Array.from({length:len},(_,k)=>(ar+dr*k)*size+(ac+dc*k));}
+  function wordPointerDown(e){e.preventDefault();const cell=e.target.closest(".word-cell");if(!cell)return;currentState.start=+cell.dataset.i;currentState.trace=[currentState.start];e.currentTarget.setPointerCapture?.(e.pointerId);paintWordTrace();}
+  function wordPointerMove(e){if(currentState.start==null)return;const el=document.elementFromPoint(e.clientX,e.clientY)?.closest?.(".word-cell");if(!el)return;currentState.trace=straightLine(currentState.start,+el.dataset.i,currentState.size);paintWordTrace();}
+  function wordPointerUp(){const st=currentState;if(st.start==null)return;const hit=st.placements.find(p=>!st.found.has(p.word)&&(sameArray(st.trace,p.cells)||sameArray(st.trace,[...p.cells].reverse())));if(hit){st.found.add(hit.word);hit.cells.forEach(i=>$(`.word-cell[data-i="${i}"]`).classList.add("found"));$(`.word-chip[data-word="${hit.word}"]`).classList.add("found");setStatus(`Found ${hit.word}!`,"good");if(st.found.size===st.placements.length){setStatus("You found every word!","good");recordCompleted();}}st.start=null;st.trace=[];paintWordTrace();}
+  function sameArray(a,b){return a.length===b.length&&a.every((v,i)=>v===b[i]);}
+  function paintWordTrace(){$$(".word-cell").forEach((c,i)=>c.classList.toggle("trace",currentState.trace.includes(i)&&!c.classList.contains("found")));}
+  function wordHint(){const p=currentState.placements.find(x=>!currentState.found.has(x.word));if(!p)return;const c=$(`.word-cell[data-i="${p.cells[0]}"]`);c.classList.add("trace");setTimeout(()=>c.classList.remove("trace"),1300);setStatus(`Look for a word beginning with ${p.word[0]}.`);}
+  function wordCheck(){setStatus(`${currentState.found.size} of ${currentState.placements.length} words found.`);}
+
+  // ---------- Maze ----------
+  function makeMaze(seed,n){
+    const rng=mulberry32(seed),cells=Array.from({length:n*n},()=>[1,1,1,1]),visited=new Set([0]),stack=[0],dirs=[[-1,0,0,2],[0,1,1,3],[1,0,2,0],[0,-1,3,1]];
+    while(stack.length){const cur=stack[stack.length-1],r=Math.floor(cur/n),c=cur%n;const options=dirs.filter(([dr,dc])=>{const nr=r+dr,nc=c+dc;return nr>=0&&nr<n&&nc>=0&&nc<n&&!visited.has(nr*n+nc);});if(!options.length){stack.pop();continue;}const [dr,dc,w,ow]=pick(options,rng),ni=(r+dr)*n+(c+dc);cells[cur][w]=0;cells[ni][ow]=0;visited.add(ni);stack.push(ni);}
+    return {n,cells,pos:0,goal:n*n-1,moves:0,startTime:Date.now(),seed};
+  }
+  function buildMaze(seed){const n={easy:21,medium:31,hard:41}[getDifficulty()];currentState=makeMaze(seed,n);$("#gameArea").innerHTML=makeBoardShell(`<canvas id="mazeCanvas" width="700" height="700"></canvas>`);$("#extraControls").innerHTML=`<div class="maze-pad"><button class="up" data-dir="0">↑</button><button class="left" data-dir="3">←</button><button class="down" data-dir="2">↓</button><button class="right" data-dir="1">→</button></div>`;$$("[data-dir]",$("#extraControls")).forEach(b=>b.addEventListener("click",()=>mazeMove(+b.dataset.dir)));const c=$("#mazeCanvas");let sx=0,sy=0;c.addEventListener("pointerdown",e=>{sx=e.clientX;sy=e.clientY;c.setPointerCapture?.(e.pointerId);});c.addEventListener("pointerup",e=>{const dx=e.clientX-sx,dy=e.clientY-sy;if(Math.max(Math.abs(dx),Math.abs(dy))<18)return;mazeMove(Math.abs(dx)>Math.abs(dy)?(dx>0?1:3):(dy>0?2:0));});drawMaze();initBoardViewport();}
+  function drawMaze(){const st=currentState,c=$("#mazeCanvas");if(!c)return;const ctx=c.getContext("2d"),s=c.width/st.n;ctx.clearRect(0,0,c.width,c.height);ctx.fillStyle="#fff";ctx.fillRect(0,0,c.width,c.height);ctx.strokeStyle="#20302c";ctx.lineWidth=Math.max(2,700/st.n/12);ctx.lineCap="square";st.cells.forEach((walls,i)=>{const r=Math.floor(i/st.n),col=i%st.n,x=col*s,y=r*s;ctx.beginPath();if(walls[0]){ctx.moveTo(x,y);ctx.lineTo(x+s,y)}if(walls[1]){ctx.moveTo(x+s,y);ctx.lineTo(x+s,y+s)}if(walls[2]){ctx.moveTo(x,y+s);ctx.lineTo(x+s,y+s)}if(walls[3]){ctx.moveTo(x,y);ctx.lineTo(x,y+s)}ctx.stroke();});ctx.fillStyle="#64ad82";ctx.fillRect(s*.22,s*.22,s*.56,s*.56);const gr=Math.floor(st.goal/st.n),gc=st.goal%st.n;ctx.font=`${s*.55}px sans-serif`;ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("⚑",gc*s+s/2,gr*s+s/2);const pr=Math.floor(st.pos/st.n),pc=st.pos%st.n;ctx.beginPath();ctx.arc(pc*s+s/2,pr*s+s/2,s*.27,0,Math.PI*2);ctx.fillStyle="#d29a3a";ctx.fill();ctx.strokeStyle="#734f16";ctx.lineWidth=2;ctx.stroke();}
+  function followMazePlayer(){
+    if(!boardView||currentGame!=="maze"||boardView.scale<=boardView.minScale*1.08)return;
+    const st=currentState,cell=700/st.n,row=Math.floor(st.pos/st.n),col=st.pos%st.n;
+    const bx=(col+.5)*cell,by=(row+.5)*cell;
+    const vx=boardView.x+bx*boardView.scale,vy=boardView.y+by*boardView.scale;
+    const mx=boardView.vw*.24,my=boardView.vh*.24;
+    if(vx<mx||vx>boardView.vw-mx)boardView.x=boardView.vw/2-bx*boardView.scale;
+    if(vy<my||vy>boardView.vh-my)boardView.y=boardView.vh/2-by*boardView.scale;
+    boardView.draw();
+  }
+  function mazeMove(dir){const st=currentState;if(st.cells[st.pos][dir])return;const d=[-st.n,1,st.n,-1][dir];st.pos+=d;st.moves++;drawMaze();followMazePlayer();if(st.pos===st.goal){const seconds=Math.round((Date.now()-st.startTime)/1000);setStatus(`Escaped in ${st.moves} moves and ${seconds} seconds!`,"good");recordCompleted();}}
+  function mazeHint(){const st=currentState,queue=[[st.pos,[]]],seen=new Set([st.pos]);while(queue.length){const [p,path]=queue.shift();if(p===st.goal){const names=["up","right","down","left"];setStatus(`Try moving ${names[path[0]]}.`);return;}for(let d=0;d<4;d++){if(!st.cells[p][d]){const np=p+[-st.n,1,st.n,-1][d];if(!seen.has(np)){seen.add(np);queue.push([np,[...path,d]]);}}}}}
+  function mazeCheck(){setStatus(`${currentState.moves} moves so far. Keep heading for the flag.`);}
+
+  // ---------- Nonogram ----------
+  function cluesForLine(line){const out=[];let n=0;for(const v of line){if(v)n++;else if(n){out.push(n);n=0;}}if(n)out.push(n);return out.length?out:[0];}
+  function makeNonogram(seed,n){const rng=mulberry32(seed),solution=Array.from({length:n},()=>Array(n).fill(0));for(let r=0;r<n;r++)for(let c=0;c<Math.ceil(n/2);c++){const chance=.38+(Math.sin((r+1)*(c+2))*0.06);const v=rng()<chance?1:0;solution[r][c]=v;solution[r][n-1-c]=v;}if(solution.flat().filter(Boolean).length<n)solution[Math.floor(n/2)].fill(1);return{n,solution,values:Array.from({length:n},()=>Array(n).fill(0)),mode:1,rowClues:solution.map(cluesForLine),colClues:Array.from({length:n},(_,c)=>cluesForLine(solution.map(r=>r[c])))};}
+  function buildNonogram(seed){const n={easy:5,medium:8,hard:10}[getDifficulty()];currentState=makeNonogram(seed,n);renderNonogram();}
+  function renderNonogram(){const st=currentState;$("#gameArea").innerHTML=`<div class="helper-card">Fill squares so each row and column matches its number groups.</div>${makeBoardShell(`<div class="nonogram-shell"><div class="nono-corner"></div><div class="nono-col-clues" style="grid-template-columns:repeat(${st.n},32px)">${st.colClues.map(x=>`<div class="nono-col-clue">${x.map(n=>`<span>${n}</span>`).join("")}</div>`).join("")}</div><div class="nono-row-clues" style="grid-template-rows:repeat(${st.n},32px)">${st.rowClues.map(x=>`<div class="nono-row-clue">${x.map(n=>`<span>${n}</span>`).join("")}</div>`).join("")}</div><div class="nono-grid" id="nonoGrid" style="grid-template-columns:repeat(${st.n},32px)"></div></div>`)} `;const grid=$("#nonoGrid");for(let r=0;r<st.n;r++)for(let c=0;c<st.n;c++){const b=document.createElement("button");b.className="nono-cell";b.dataset.r=r;b.dataset.c=c;b.addEventListener("click",()=>nonoTap(r,c));grid.appendChild(b);}$("#extraControls").innerHTML=`<div class="control-grid"><button id="fillMode" class="active">■ Fill</button><button id="markMode">× Mark</button></div>`;$("#fillMode").addEventListener("click",()=>setNonoMode(1));$("#markMode").addEventListener("click",()=>setNonoMode(2));initBoardViewport();}
+  function setNonoMode(m){currentState.mode=m;$("#fillMode").classList.toggle("active",m===1);$("#markMode").classList.toggle("active",m===2);}
+  function nonoTap(r,c){const st=currentState;st.values[r][c]=st.values[r][c]===st.mode?0:st.mode;const el=$(`.nono-cell[data-r="${r}"][data-c="${c}"]`);el.className="nono-cell"+(st.values[r][c]===1?" filled":st.values[r][c]===2?" marked":"");if(st.solution.every((row,ri)=>row.every((v,ci)=>(st.values[ri][ci]===1?1:0)===v))){setStatus("Picture complete!","good");recordCompleted();}}
+  function nonoCheck(){let wrong=0;$$(".nono-cell").forEach(el=>{const r=+el.dataset.r,c=+el.dataset.c,w=currentState.values[r][c]===1&&!currentState.solution[r][c];el.classList.toggle("wrong",w);if(w)wrong++;});setStatus(wrong?`${wrong} filled square${wrong===1?"":"s"} should be empty.`:"No incorrect filled squares so far.",wrong?"bad":"good");}
+  function nonoHint(){const st=currentState;for(let r=0;r<st.n;r++)for(let c=0;c<st.n;c++){const should=st.solution[r][c]?1:2;if(st.values[r][c]!==should){st.values[r][c]=should;const el=$(`.nono-cell[data-r="${r}"][data-c="${c}"]`);el.className="nono-cell "+(should===1?"filled":"marked");setStatus("One square revealed.");return;}}}
+
+  // ---------- Scramble ----------
+  async function buildScramble(seed){showLoading("Mixing up a new word…");const rng=mulberry32(seed),theme=pick(Object.keys(THEMES),rng),online=await fetchThemeEntries(theme,true),pool=[...baseEntries(theme),...online.filter(x=>x[1]&&!x[1].startsWith("A word"))];let entry=pick(pool,rng),word=entry[0],mixed=word;for(let i=0;i<12&&mixed===word;i++)mixed=shuffle([...word],rng).join("");currentState={answer:word,clue:entry[1],mixed,typed:"",used:[],theme,solved:false};renderScramble();}
+  function renderScramble(){const st=currentState;$("#gameArea").innerHTML=`${themeCard(st.theme,"Tap the letters in the correct order.")}<div class="prompt-card"><div class="question">${st.clue}</div><div class="big" id="scrambleAnswer">${st.typed||"_ ".repeat(st.answer.length)}</div></div><div class="letter-tiles" id="scrambleTiles"></div>`;$("#scrambleTiles").innerHTML=[...st.mixed].map((l,i)=>`<button data-i="${i}" ${st.used.includes(i)?"disabled":""} style="${st.used.includes(i)?"opacity:.3":""}">${l}</button>`).join("");$$("#scrambleTiles button").forEach(b=>b.addEventListener("click",()=>{if(b.disabled)return;const i=+b.dataset.i;currentState.used.push(i);currentState.typed+=b.textContent;renderScramble();if(currentState.typed.length===currentState.answer.length)scrambleCheck();}));$("#extraControls").innerHTML=`<div class="control-grid"><button id="scrambleBack">⌫</button><button id="scrambleClear">Clear</button><button id="scrambleNext" ${st.solved?"":"disabled"}>Next</button></div>`;$("#scrambleBack").addEventListener("click",()=>{currentState.typed=currentState.typed.slice(0,-1);currentState.used.pop();currentState.solved=false;renderScramble();});$("#scrambleClear").addEventListener("click",()=>{currentState.typed="";currentState.used=[];currentState.solved=false;renderScramble();});$("#scrambleNext").addEventListener("click",()=>newPuzzle());}
+  function updateScramble(){$("#scrambleAnswer").textContent=currentState.typed||"_ ".repeat(currentState.answer.length);if(currentState.typed.length===currentState.answer.length)scrambleCheck();}
+  function scrambleCheck(){if(currentState.typed===currentState.answer){currentState.solved=true;setStatus("That is it! Tap Next for another word.","good");renderScramble();recordCompleted();}else{currentState.solved=false;setStatus("Those letters need another shuffle.","bad");}}
+  function scrambleHint(){const i=currentState.typed.length;if(i>=currentState.answer.length)return;setStatus(`The next letter is ${currentState.answer[i]}.`);}
+
+  // ---------- Story Riddles ----------
+  function buildRiddle(seed){
+    const item=RIDDLES[seed%RIDDLES.length];
+    currentState={...item};
+    $("#gameArea").innerHTML=`<div class="prompt-card"><div class="riddle-story">${item.story}</div><div class="riddle-question">${item.question}</div><textarea class="answer-input" id="riddleAnswer" rows="3" autocomplete="off" placeholder="Explain your answer"></textarea></div>`;
+  }
+  function riddleCheck(){
+    const val=String($("#riddleAnswer").value||"").toLowerCase();
+    const correct=currentState.accept.some(term=>val.includes(String(term).toLowerCase()));
+    if(correct){setStatus(`Correct — ${currentState.answer}`,"good");recordCompleted();}
+    else setStatus("Not quite. Try the hint and explain your reasoning another way.","bad");
+  }
+  function riddleHint(){setStatus(currentState.hint);}
+
+  // ---------- Cryptogram ----------
+  function makeCipher(seed){const rng=mulberry32(seed),alpha="ABCDEFGHIJKLMNOPQRSTUVWXYZ",arr=[...alpha];let shuffled;do{shuffled=shuffle(arr,rng);}while(shuffled.some((x,i)=>x===arr[i]));return Object.fromEntries(arr.map((x,i)=>[x,shuffled[i]]));}
+  function buildCryptogram(seed){const quote=QUOTES[seed%QUOTES.length],cipher=makeCipher(seed),encoded=[...quote].map(ch=>cipher[ch]||ch).join("");currentState={quote,encoded,cipher,guesses:{},selected:null};renderCryptogram();}
+  function renderCryptogram(){const st=currentState;const tokens=st.encoded.split(" ").map(word=>`<div class="crypto-word">${[...word].map(ch=>/[A-Z]/.test(ch)?`<button class="crypto-letter" data-c="${ch}"><span class="guess">${st.guesses[ch]||""}</span><span class="cipher">${ch}</span></button>`:`<span class="crypto-punc">${ch}</span>`).join("")}</div>`).join("");$("#gameArea").innerHTML=`<div class="helper-card">Tap a coded letter, then choose what you think it represents.</div><div class="crypto-quote">${tokens}</div><div class="alpha-pad" id="alphaPad">${[..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"].map(l=>`<button data-l="${l}">${l}</button>`).join("")}<button data-l="">⌫</button></div>`;$$(".crypto-letter").forEach(b=>b.addEventListener("click",()=>{st.selected=b.dataset.c;renderCryptogram();}));if(st.selected)$$(`.crypto-letter[data-c="${st.selected}"]`).forEach(b=>b.classList.add("selected"));$$("#alphaPad button").forEach(b=>b.addEventListener("click",()=>cryptoGuess(b.dataset.l)));}
+  function cryptoGuess(letter){const st=currentState;if(!st.selected)return toast("Tap a coded letter first");for(const key of Object.keys(st.guesses))if(st.guesses[key]===letter&&key!==st.selected)delete st.guesses[key];if(letter)st.guesses[st.selected]=letter;else delete st.guesses[st.selected];renderCryptogram();cryptoAutoCheck();}
+  function decodedCrypto(){return [...currentState.encoded].map(ch=>currentState.guesses[ch]||ch.replace(/[A-Z]/,"_")).join("");}
+  function cryptoAutoCheck(){const decoded=[...currentState.encoded].map(ch=>/[A-Z]/.test(ch)?(currentState.guesses[ch]||""):ch).join("");if(decoded===currentState.quote){setStatus("Cipher cracked!","good");recordCompleted();}}
+  function cryptoCheck(){const st=currentState;let wrong=0;for(const [c,g] of Object.entries(st.guesses)){const positions=[...st.encoded].map((x,i)=>x===c?i:-1).filter(i=>i>=0);if(positions.some(i=>st.quote[i]!==g))wrong++;}setStatus(wrong?`${wrong} letter mapping${wrong===1?"":"s"} are incorrect.`:"Every mapping entered so far is correct.",wrong?"bad":"good");}
+  function cryptoHint(){const st=currentState;for(let i=0;i<st.encoded.length;i++){const c=st.encoded[i],plain=st.quote[i];if(/[A-Z]/.test(c)&&st.guesses[c]!==plain){st.guesses[c]=plain;st.selected=c;renderCryptogram();setStatus(`${c} stands for ${plain}.`);return;}}}
+
+  // ---------- Logic Grid ----------
+  const LOGIC_SCENARIOS = [
+    {title:"Vacation Plans",aLabel:"People",bLabel:"Vacation",cLabel:"Luggage",a:["Ava","Ben","Cora","Dylan","Ella"],b:["Beach","Mountains","City","Cruise","Desert"],c:["Backpack","Blue Case","Duffel","Red Case","Trunk"],bPast:"went to the",bDo:"go to the",cPast:"carried the",cDo:"carry the"},
+    {title:"City Day",aLabel:"People",bLabel:"Stop",cLabel:"Item",a:["Finn","Gia","Hugo","Iris","Jude"],b:["Aquarium","Bakery","Gallery","Market","Theater"],c:["Camera","Jacket","Notebook","Umbrella","Water Bottle"],bPast:"visited the",bDo:"visit the",cPast:"brought the",cDo:"bring the"},
+    {title:"Camping Weekend",aLabel:"Campers",bLabel:"Campsite",cLabel:"Gear",a:["Kira","Liam","Maya","Noah","Owen"],b:["Lake","Meadow","Pines","Ridge","River"],c:["Compass","Lantern","Map","Tent","Thermos"],bPast:"camped at the",bDo:"camp at the",cPast:"packed the",cDo:"pack the"},
+    {title:"Festival Day",aLabel:"Friends",bLabel:"Event",cLabel:"Treat",a:["Pia","Quinn","Rosa","Sam","Tara"],b:["Carnival","Concert","Craft Fair","Fireworks","Parade"],c:["Apple","Cookie","Lemonade","Popcorn","Pretzel"],bPast:"attended the",bDo:"attend the",cPast:"bought the",cDo:"buy the"}
+  ];
+  function permutations(arr){if(arr.length<=1)return[arr];const out=[];arr.forEach((x,i)=>permutations([...arr.slice(0,i),...arr.slice(i+1)]).forEach(p=>out.push([x,...p])));return out;}
+  function logicCandidateKey(sol){return sol.b.join("")+"|"+sol.c.join("");}
+  function logicSolutions(n){const ids=Array.from({length:n},(_,i)=>i),perms=permutations(ids),out=[];for(const b of perms)for(const c of perms)out.push({b,c});return out;}
+  function makeLogic(seed){
+    const rng=mulberry32(seed),difficulty=getDifficulty(),n=difficulty==="hard"?5:4,scenario=pick(LOGIC_SCENARIOS,rng);
+    const A=shuffle(scenario.a,rng).slice(0,n),B=shuffle(scenario.b,rng).slice(0,n),C=shuffle(scenario.c,rng).slice(0,n);
+    const ids=Array.from({length:n},(_,i)=>i),actual={b:shuffle(ids,rng),c:shuffle(ids,rng)};
+    const pool=[];
+    for(let i=0;i<n;i++){
+      const bj=actual.b[i],ck=actual.c[i];
+      pool.push({type:"direct",text:`${A[i]} ${scenario.bPast} ${B[bj]}.`,test:s=>s.b[i]===bj});
+      pool.push({type:"direct",text:`${A[i]} ${scenario.cPast} ${C[ck]}.`,test:s=>s.c[i]===ck});
+      for(let j=0;j<n;j++)if(j!==bj)pool.push({type:"negative",text:`${A[i]} did not ${scenario.bDo} ${B[j]}.`,test:s=>s.b[i]!==j});
+      for(let k=0;k<n;k++)if(k!==ck)pool.push({type:"negative",text:`${A[i]} did not ${scenario.cDo} ${C[k]}.`,test:s=>s.c[i]!==k});
+    }
+    for(let j=0;j<n;j++){
+      const person=actual.b.indexOf(j),ck=actual.c[person];
+      pool.push({type:"link",text:`The person who ${scenario.bPast} ${B[j]} ${scenario.cPast} ${C[ck]}.`,test:s=>{const i=s.b.indexOf(j);return s.c[i]===ck;}});
+      for(let k=0;k<n;k++)if(k!==ck)pool.push({type:"negative",text:`The person who ${scenario.bPast} ${B[j]} did not ${scenario.cDo} ${C[k]}.`,test:s=>{const i=s.b.indexOf(j);return s.c[i]!==k;}});
+    }
+    let possible=logicSolutions(n),chosen=[],available=shuffle(pool,rng),target={easy:7,medium:9,hard:11}[difficulty];
+    const bonus={easy:{direct:.32,link:.22,negative:0},medium:{direct:.05,link:.28,negative:.13},hard:{direct:-.22,link:.18,negative:.34}}[difficulty];
+    while(possible.length>1&&chosen.length<16){
+      let best=null,bestNext=null,bestScore=-Infinity;
+      for(const clue of available){
+        const next=possible.filter(clue.test);if(!next.length||next.length===possible.length)continue;
+        const gain=(possible.length-next.length)/possible.length;
+        const score=gain+(bonus[clue.type]||0)+rng()*.015;
+        if(score>bestScore){bestScore=score;best=clue;bestNext=next;}
+      }
+      if(!best)break;
+      chosen.push(best);possible=bestNext;available=available.filter(x=>x!==best);
+      if(possible.length===1&&chosen.length>=target)break;
+    }
+    while(chosen.length<target&&available.length){const clue=available.shift();if(clue.test(actual))chosen.push(clue);}
+    const solutions={ab:Array(n*n).fill(1),ac:Array(n*n).fill(1),bc:Array(n*n).fill(1)};
+    for(let i=0;i<n;i++){solutions.ab[i*n+actual.b[i]]=2;solutions.ac[i*n+actual.c[i]]=2;}
+    for(let j=0;j<n;j++){const i=actual.b.indexOf(j);solutions.bc[j*n+actual.c[i]]=2;}
+    return{scenario,A,B,C,n,actual,solutions,marks:{ab:Array(n*n).fill(0),ac:Array(n*n).fill(0),bc:Array(n*n).fill(0)},clues:shuffle(chosen,rng).map(x=>x.text)};
+  }
+  function buildLogic(seed){currentState=makeLogic(seed);renderLogic();}
+  function logicMatrixHTML(key,title,rows,cols){
+    const st=currentState,n=st.n,marks=st.marks[key];
+    return `<section class="logic-matrix"><h4>${title}</h4><div class="logic-table" style="grid-template-columns:minmax(76px,1.35fr) repeat(${n},minmax(40px,1fr))"><div class="logic-corner"></div>${cols.map(x=>`<div class="logic-col">${x}</div>`).join("")}${rows.map((row,r)=>`<div class="logic-row">${row}</div>${cols.map((_,c)=>{const v=marks[r*n+c];return `<button class="logic-cell ${v===1?"x":v===2?"o":""}" data-matrix="${key}" data-r="${r}" data-c="${c}" aria-label="${row} and ${cols[c]}">${v===1?"✕":v===2?"○":""}</button>`;}).join("")}`).join("")}</div></section>`;
+  }
+  function renderLogic(){
+    const st=currentState,s=st.scenario;
+    $("#gameArea").innerHTML=`<div class="helper-card logic-story"><strong>${s.title}</strong><div class="direction-line">Tap a square once for X, twice for O, and a third time to clear it.</div><ol class="logic-clues">${st.clues.map(c=>`<li>${c}</li>`).join("")}</ol></div><div class="logic-grid-stack">${logicMatrixHTML("ab",`${s.aLabel} × ${s.bLabel}`,st.A,st.B)}${logicMatrixHTML("ac",`${s.aLabel} × ${s.cLabel}`,st.A,st.C)}${logicMatrixHTML("bc",`${s.bLabel} × ${s.cLabel}`,st.B,st.C)}</div><div class="logic-key"><span><b>✕</b> cannot match</span><span><b>○</b> must match</span></div>`;
+    $$(".logic-cell").forEach(b=>b.addEventListener("click",()=>logicTap(b.dataset.matrix,+b.dataset.r,+b.dataset.c)));
+  }
+  function logicTap(key,r,c){const st=currentState,i=r*st.n+c;st.marks[key][i]=(st.marks[key][i]+1)%3;renderLogic();}
+  function logicCheck(){
+    const st=currentState;let wrong=0,missing=0,marked=0;
+    for(const key of ["ab","ac","bc"])for(let i=0;i<st.marks[key].length;i++){
+      const mark=st.marks[key][i],sol=st.solutions[key][i];if(mark)marked++;
+      if((mark===2&&sol!==2)||(mark===1&&sol===2))wrong++;
+      if(sol===2&&mark!==2)missing++;
+    }
+    if(wrong)return setStatus(`${wrong} mark${wrong===1?"":"s"} conflict with the clues.`,"bad");
+    if(!missing){setStatus("Every person, place, and item matches — solved!","good");recordCompleted();return;}
+    setStatus(marked?`No conflicting marks so far. ${missing} correct O${missing===1?"":"s"} still need to be placed.`:"Start by ruling out a relationship with X or confirming one with O.","good");
+  }
+  function logicHint(){
+    const st=currentState;
+    for(const key of ["ab","ac","bc"]){const i=st.solutions[key].findIndex((v,j)=>v===2&&st.marks[key][j]!==2);if(i>=0){const r=Math.floor(i/st.n),c=i%st.n;st.marks[key][i]=2;for(let x=0;x<st.n;x++){if(x!==c&&st.marks[key][r*st.n+x]===0)st.marks[key][r*st.n+x]=1;if(x!==r&&st.marks[key][x*st.n+c]===0)st.marks[key][x*st.n+c]=1;}renderLogic();setStatus("One confirmed match and its row and column eliminations were filled in.");return;}}
+  }
+
+  // ---------- Crossword ----------
+  function canPlaceCW(grid,word,r,c,dir){const n=grid.length,dr=dir==="D"?1:0,dc=dir==="A"?1:0,er=r+dr*(word.length-1),ec=c+dc*(word.length-1);if(r<0||c<0||er>=n||ec>=n)return false;const beforeR=r-dr,beforeC=c-dc,afterR=er+dr,afterC=ec+dc;if(beforeR>=0&&beforeC>=0&&beforeR<n&&beforeC<n&&grid[beforeR][beforeC])return false;if(afterR>=0&&afterC>=0&&afterR<n&&afterC<n&&grid[afterR][afterC])return false;let overlaps=0;for(let k=0;k<word.length;k++){const rr=r+dr*k,cc=c+dc*k,existing=grid[rr][cc];if(existing&&existing!==word[k])return false;if(existing===word[k])overlaps++;if(!existing){if(dir==="A"){if((rr>0&&grid[rr-1][cc])||(rr<n-1&&grid[rr+1][cc]))return false;}else{if((cc>0&&grid[rr][cc-1])||(cc<n-1&&grid[rr][cc+1]))return false;}}}return overlaps>0;}
+  function placeCW(grid,word,r,c,dir){const dr=dir==="D"?1:0,dc=dir==="A"?1:0;for(let k=0;k<word.length;k++)grid[r+dr*k][c+dc*k]=word[k];}
+  function crosswordEntries(theme,difficulty){
+    const level={easy:1,medium:2,hard:3}[difficulty],limits={easy:[3,6],medium:[4,8],hard:[5,10]}[difficulty];
+    return (CROSSWORD_THEMES[theme]||CROSSWORD_THEMES.animals).filter(x=>x[0].length>=limits[0]&&x[0].length<=limits[1]).map(x=>[x[0],x[level]]);
+  }
+  function generateCrossword(entries,seed,difficulty){
+    const rng=mulberry32(seed),n={easy:13,medium:15,hard:17}[difficulty],target={easy:7,medium:9,hard:11}[difficulty],preferred={easy:4.5,medium:6,hard:7.5}[difficulty];
+    for(let trial=0;trial<45;trial++){
+      const grid=Array.from({length:n},()=>Array(n).fill("")),placements=[];
+      const unique=shuffle(entries,rng).filter((x,i,a)=>a.findIndex(y=>y[0]===x[0])===i);
+      const ranked=unique.map(entry=>{const letters=new Set(entry[0]);const links=unique.reduce((sum,other)=>sum+(other!==entry&&[...letters].some(ch=>other[0].includes(ch))?1:0),0);return{entry,score:links-Math.abs(entry[0].length-preferred)*.6+rng()};}).sort((a,b)=>b.score-a.score).map(x=>x.entry);
+      const first=ranked.shift();if(!first)break;
+      let r=Math.floor(n/2),c=Math.floor((n-first[0].length)/2);placeCW(grid,first[0],r,c,"A");placements.push({word:first[0],clue:first[1],r,c,dir:"A"});
+      for(const [word,clue] of ranked){
+        const options=[];
+        for(const p of placements)for(let a=0;a<word.length;a++)for(let b=0;b<p.word.length;b++)if(word[a]===p.word[b]){
+          const dir=p.dir==="A"?"D":"A",rr=p.r+(p.dir==="D"?b:0)-(dir==="D"?a:0),cc=p.c+(p.dir==="A"?b:0)-(dir==="A"?a:0);
+          if(canPlaceCW(grid,word,rr,cc,dir))options.push([rr,cc,dir]);
+        }
+        if(options.length){const [rr,cc,dir]=pick(options,rng);placeCW(grid,word,rr,cc,dir);placements.push({word,clue,r:rr,c:cc,dir});if(placements.length>=target)break;}
+      }
+      if(placements.length>=Math.min(6,target)){
+        const used=[];placements.forEach(p=>{for(let k=0;k<p.word.length;k++)used.push([p.r+(p.dir==="D"?k:0),p.c+(p.dir==="A"?k:0)]);});
+        const minR=Math.max(0,Math.min(...used.map(x=>x[0]))-1),maxR=Math.min(n-1,Math.max(...used.map(x=>x[0]))+1),minC=Math.max(0,Math.min(...used.map(x=>x[1]))-1),maxC=Math.min(n-1,Math.max(...used.map(x=>x[1]))+1);
+        const trim=grid.slice(minR,maxR+1).map(row=>row.slice(minC,maxC+1));placements.forEach(p=>{p.r-=minR;p.c-=minC;});
+        return{grid:trim,placements,values:{},active:null};
+      }
+    }
+    return null;
+  }
+  async function buildCrossword(seed){
+    showLoading("Building a clear themed crossword…");
+    const rng=mulberry32(seed),difficulty=getDifficulty(),themes=shuffle(Object.keys(CROSSWORD_THEMES),rng);
+    let cw=null,theme=themes[0];
+    for(const candidate of themes){theme=candidate;cw=generateCrossword(crosswordEntries(candidate,difficulty),seed^hashString(candidate),difficulty);if(cw)break;}
+    if(!cw){theme="animals";cw=generateCrossword(crosswordEntries(theme,"easy"),seed^55,"easy");}
+    cw.theme=theme;numberCrossword(cw);currentState=cw;renderCrossword();
+  }
+  function numberCrossword(st){let num=1;const starts=new Map();const sorted=[...st.placements].sort((a,b)=>a.r-b.r||a.c-b.c);for(const p of sorted){const key=p.r+","+p.c;if(!starts.has(key))starts.set(key,num++);p.num=starts.get(key);}st.starts=starts;}
+  function renderCrossword(){
+    const st=currentState,rows=st.grid.length,cols=st.grid[0].length;let cells="";
+    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+      const ch=st.grid[r][c],key=r+","+c;
+      if(!ch)cells+=`<div class="cw-cell block"></div>`;
+      else cells+=`<div class="cw-cell" data-r="${r}" data-c="${c}">${st.starts.has(key)?`<span class="cw-num">${st.starts.get(key)}</span>`:""}<input maxlength="1" inputmode="text" autocomplete="off" aria-label="Crossword cell" value="${st.values[key]||""}" /></div>`;
+    }
+    const across=st.placements.filter(p=>p.dir==="A").sort((a,b)=>a.num-b.num),down=st.placements.filter(p=>p.dir==="D").sort((a,b)=>a.num-b.num);
+    $("#gameArea").innerHTML=`${themeCard(st.theme,"Tap a clue to jump to its first square, then type the answer.")}<div class="crossword-wrap">${makeBoardShell(`<div class="crossword" style="grid-template-columns:repeat(${cols},38px)">${cells}</div>`)}<div class="clue-columns"><div class="clue-box"><h4>Across</h4>${across.map(p=>`<div class="clue-item" data-word="${p.word}" data-dir="A">${p.num}. ${p.clue}</div>`).join("")}</div><div class="clue-box"><h4>Down</h4>${down.map(p=>`<div class="clue-item" data-word="${p.word}" data-dir="D">${p.num}. ${p.clue}</div>`).join("")}</div></div></div>`;
+    $$(".cw-cell input").forEach(inp=>{inp.addEventListener("focus",()=>activateCrossword(+inp.parentElement.dataset.r,+inp.parentElement.dataset.c));inp.addEventListener("click",()=>activateCrossword(+inp.parentElement.dataset.r,+inp.parentElement.dataset.c,true));inp.addEventListener("input",e=>cwInput(e));inp.addEventListener("keydown",e=>cwKey(e));});
+    $$(".clue-item").forEach(el=>el.addEventListener("click",()=>{const p=st.placements.find(x=>x.word===el.dataset.word&&x.dir===el.dataset.dir);st.active=p;paintCrossword();focusCWCell(p.r,p.c);}));
+    initBoardViewport();
+  }
+  function wordsAt(r,c){return currentState.placements.filter(p=>{for(let k=0;k<p.word.length;k++)if(p.r+(p.dir==="D"?k:0)===r&&p.c+(p.dir==="A"?k:0)===c)return true;return false;});}
+  function activateCrossword(r,c,toggle=false){const ws=wordsAt(r,c);if(!ws.length)return;if(toggle&&currentState.active&&ws.includes(currentState.active)&&ws.length>1)currentState.active=ws.find(x=>x!==currentState.active);else if(!currentState.active||!ws.includes(currentState.active))currentState.active=ws[0];paintCrossword();}
+  function paintCrossword(){const st=currentState;$$(".cw-cell").forEach(x=>x.classList.remove("active","word-active"));$$(".clue-item").forEach(x=>x.classList.remove("active"));if(!st.active)return;for(let k=0;k<st.active.word.length;k++){const r=st.active.r+(st.active.dir==="D"?k:0),c=st.active.c+(st.active.dir==="A"?k:0);$(`.cw-cell[data-r="${r}"][data-c="${c}"]`)?.classList.add("word-active");}$(`.clue-item[data-word="${st.active.word}"][data-dir="${st.active.dir}"]`)?.classList.add("active");}
+  function focusCWCell(r,c){const inp=$(`.cw-cell[data-r="${r}"][data-c="${c}"] input`);inp?.focus();inp?.select();}
+  function cwInput(e){const el=e.target.parentElement,r=+el.dataset.r,c=+el.dataset.c,key=r+","+c,val=e.target.value.toUpperCase().replace(/[^A-Z]/g,"").slice(-1);e.target.value=val;currentState.values[key]=val;el.classList.remove("wrong");if(val)moveCW(1,r,c);cwSolved();}
+  function cwKey(e){if(e.key==="Backspace"&&!e.target.value){const el=e.target.parentElement;moveCW(-1,+el.dataset.r,+el.dataset.c);}}
+  function moveCW(step,r,c){const p=currentState.active;if(!p)return;let idx=-1;for(let k=0;k<p.word.length;k++)if(p.r+(p.dir==="D"?k:0)===r&&p.c+(p.dir==="A"?k:0)===c){idx=k;break;}const ni=idx+step;if(ni>=0&&ni<p.word.length)focusCWCell(p.r+(p.dir==="D"?ni:0),p.c+(p.dir==="A"?ni:0));}
+  function cwSolved(){const st=currentState;if(st.placements.every(p=>[...p.word].every((ch,k)=>st.values[(p.r+(p.dir==="D"?k:0))+","+(p.c+(p.dir==="A"?k:0))]===ch))){setStatus("Crossword complete!","good");recordCompleted();}}
+  function cwCheck(){let wrong=0;$$(".cw-cell:not(.block)").forEach(el=>{const r=+el.dataset.r,c=+el.dataset.c,key=r+","+c,answer=currentState.grid[r][c],v=currentState.values[key];const w=v&&v!==answer;el.classList.toggle("wrong",!!w);if(w)wrong++;});setStatus(wrong?`${wrong} letter${wrong===1?"":"s"} need changing.`:"All entered letters are correct.",wrong?"bad":"good");}
+  function cwHint(){const st=currentState;let p=st.active||st.placements[0];for(let k=0;k<p.word.length;k++){const r=p.r+(p.dir==="D"?k:0),c=p.c+(p.dir==="A"?k:0),key=r+","+c;if(st.values[key]!==p.word[k]){st.values[key]=p.word[k];const inp=$(`.cw-cell[data-r="${r}"][data-c="${c}"] input`);if(inp)inp.value=p.word[k];setStatus(`Filled one letter in ${p.num}-${p.dir==="A"?"Across":"Down"}.`);return;}}}
+
+  // ---------- Trivia ----------
+  const TRIVIA_CATEGORIES={"Any":"","General Knowledge":"9","Books":"10","Film":"11","Science & Nature":"17","Computers":"18","Mathematics":"19","Sports":"21","Geography":"22","History":"23","Art":"25","Animals":"27"};
+  async function getTriviaToken(){let token=localStorage.getItem(STORAGE.triviaToken);if(token)return token;try{const r=await fetch("https://opentdb.com/api_token.php?command=request");const d=await r.json();if(d.response_code===0){token=d.token;localStorage.setItem(STORAGE.triviaToken,token);return token;}}catch{}return"";}
+  function triviaSeenSet(){return new Set(loadJSON(STORAGE.triviaSeen,[]));}
+  function markTriviaSeen(question){const seen=loadJSON(STORAGE.triviaSeen,[]),key=hashString(question);if(!seen.includes(key)){seen.push(key);saveJSON(STORAGE.triviaSeen,seen.slice(-2000));}}
+  async function fetchTriviaBatch(category,difficulty){const token=await getTriviaToken();const params=new URLSearchParams({amount:"10",type:"multiple",encode:"url3986"});if(category)params.set("category",category);if(difficulty)params.set("difficulty",difficulty);if(token)params.set("token",token);const r=await fetch("https://opentdb.com/api.php?"+params);if(!r.ok)throw new Error("Trivia service unavailable");const d=await r.json();if(d.response_code===4&&token){await fetch(`https://opentdb.com/api_token.php?command=reset&token=${token}`);throw new Error("Trivia token reset; try again");}if(d.response_code!==0)throw new Error("No trivia available for that selection");const all=d.results.map(x=>({category:decodeURIComponent(x.category),difficulty:x.difficulty,question:decodeURIComponent(x.question),correct:decodeURIComponent(x.correct_answer),incorrect:x.incorrect_answers.map(decodeURIComponent)}));const seen=triviaSeenSet(),fresh=all.filter(x=>!seen.has(hashString(x.question)));return fresh.length?fresh:all;}
+  async function buildTrivia(seed){showLoading("Loading a fresh trivia round…");const score=currentState?.score||0,streak=currentState?.streak||0;const settings=loadJSON("puzzleTriviaSettings",{category:"",difficulty:getDifficulty()});let queue=[];try{queue=await fetchTriviaBatch(settings.category,settings.difficulty);}catch(e){console.warn(e);queue=shuffle(FALLBACK_TRIVIA.filter(x=>settings.difficulty?x.difficulty===settings.difficulty:true),mulberry32(seed));if(!queue.length)queue=shuffle(FALLBACK_TRIVIA,mulberry32(seed));toast("Using built-in trivia for this round");}currentState={queue,index:0,score,streak,answered:false,settings};renderTrivia();}
+  function renderTrivia(){const st=currentState,q=st.queue[st.index];if(!q){return newPuzzle();}markTriviaSeen(q.question);const rng=mulberry32(hashString(q.question)),choices=shuffle([q.correct,...q.incorrect],rng);st.current=q;st.choices=choices;st.answered=false;$("#gameArea").innerHTML=`<div class="score-row"><span>Score: ${st.score}</span><span>Streak: ${st.streak}</span><span>${q.category}</span></div><div class="prompt-card"><div class="question">${q.question}</div></div><div class="choice-list">${choices.map((c,i)=>`<button class="choice" data-i="${i}">${c}</button>`).join("")}</div>`;$("#extraControls").innerHTML=`<div class="control-grid"><select id="triviaCategory" aria-label="Trivia category">${Object.entries(TRIVIA_CATEGORIES).map(([n,v])=>`<option value="${v}" ${st.settings.category===v?"selected":""}>${n}</option>`).join("")}</select><button id="triviaNext">Next</button></div>`;$$(`.choice`).forEach(b=>b.addEventListener("click",()=>answerTrivia(b)));$("#triviaNext").addEventListener("click",nextTrivia);$("#triviaCategory").addEventListener("change",e=>{st.settings.category=e.target.value;st.settings.difficulty=getDifficulty();saveJSON("puzzleTriviaSettings",st.settings);newPuzzle();});}
+  function answerTrivia(btn){const st=currentState;if(st.answered)return;st.answered=true;const answer=btn.textContent,correct=st.current.correct;$$(`.choice`).forEach(b=>{b.disabled=true;if(b.textContent===correct)b.classList.add("correct");});if(answer===correct){st.score++;st.streak++;setStatus("Correct!","good");recordCompleted();}else{btn.classList.add("incorrect");st.streak=0;setStatus(`The answer is ${correct}.`,"bad");}}
+  function nextTrivia(){const st=currentState;if(!st.answered)return toast("Choose an answer first");st.index++;if(st.index>=st.queue.length){const score=st.score,streak=st.streak;buildTrivia(uniqueSeed("trivia")).then(()=>{currentState.score=score;currentState.streak=streak;renderTrivia();});}else renderTrivia();setStatus("");}
+  function triviaHint(){const st=currentState;if(st.answered)return;const wrong=$$(".choice").filter(b=>b.textContent!==st.current.correct&&!b.disabled);if(wrong.length){const choice=pick(wrong);choice.disabled=true;choice.style.opacity=.35;setStatus("One incorrect choice removed.");}}
+  function triviaCheck(){setStatus(`Score ${currentState.score}, current streak ${currentState.streak}.`);}
+
+  // ---------- Shared buttons ----------
+  function handleHint(){if(!currentGame)return;({sudoku:sudokuHint,crossword:cwHint,wordsearch:wordHint,maze:mazeHint,nonogram:nonoHint,scramble:scrambleHint,cryptogram:cryptoHint,logic:logicHint,riddle:riddleHint,trivia:triviaHint}[currentGame])?.();}
+  function handleCheck(){if(!currentGame)return;({sudoku:sudokuCheck,crossword:cwCheck,wordsearch:wordCheck,maze:mazeCheck,nonogram:nonoCheck,scramble:scrambleCheck,cryptogram:cryptoCheck,logic:logicCheck,riddle:riddleCheck,trivia:triviaCheck}[currentGame])?.();}
+
+  // ---------- Wiring ----------
+  $("#homeBtn").addEventListener("click",showHome);$("#backBtn").addEventListener("click",showHome);$("#newBtn").addEventListener("click",newPuzzle);$("#hintBtn").addEventListener("click",handleHint);$("#checkBtn").addEventListener("click",handleCheck);
+  $("#playDifficulty").value=localStorage.getItem(STORAGE.difficulty)||"medium";$("#playDifficulty").addEventListener("change",e=>{localStorage.setItem(STORAGE.difficulty,e.target.value);if(currentGame)newPuzzle();});
+  $("#infoBtn").addEventListener("click",()=>$("#infoOverlay").classList.add("open"));$("#closeInfoBtn").addEventListener("click",()=>$("#infoOverlay").classList.remove("open"));$("#infoOverlay").addEventListener("click",e=>{if(e.target.id==="infoOverlay")e.currentTarget.classList.remove("open");});
+  window.addEventListener("popstate",()=>{if($("#playScreen").classList.contains("active"))showHome();});
+  window.addEventListener("keydown",e=>{if(currentGame==="maze"){const map={ArrowUp:0,ArrowRight:1,ArrowDown:2,ArrowLeft:3};if(e.key in map){e.preventDefault();mazeMove(map[e.key]);}}});
+  if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+
+  window.addEventListener("resize",()=>{if($("#boardViewport"))setTimeout(initBoardViewport,0);});
+  renderHome();updateStats();
+})();
+</script>
+</body>
+</html>
