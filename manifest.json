@@ -1,6 +1,6 @@
 {
   "name": "Puzzle Pocket",
-  "short_name": "Puzzles",
+  "short_name": "Puzzler",
   "description": "Phone-friendly generated word, number, logic, maze, riddle, and trivia puzzles.",
   "start_url": "./",
   "display": "standalone",
