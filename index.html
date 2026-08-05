@@ -70,6 +70,10 @@
     .tool-row{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}
     .tool-row::-webkit-scrollbar{display:none}
     .tool-row button,.tool-row select{flex:0 0 auto}
+    .tool-inline{display:flex;gap:8px;align-items:stretch;flex:0 0 auto}
+    .toolbar-select{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:white;border-radius:13px;padding:6px 10px;box-shadow:0 3px 12px rgba(34,65,57,.06)}
+    .toolbar-select span{font-size:13px;font-weight:800;color:var(--muted);white-space:nowrap}
+    .toolbar-select select{border:0;min-height:30px;padding:0 22px 0 0;background:transparent;font-weight:800;min-width:110px}
     .tool-row select{min-height:44px;border:1px solid var(--line);background:white;border-radius:13px;padding:8px 11px;font-weight:750;color:var(--ink)}
     .game-panel{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:14px;box-shadow:var(--shadow);overflow:hidden}
     .status{min-height:24px;margin:10px 4px 0;text-align:center;font-weight:750;color:var(--muted)}
@@ -130,11 +134,21 @@
     .answer-input{display:block;width:100%;min-height:52px;margin-top:12px;border:2px solid var(--line);border-radius:14px;padding:10px 13px;font-size:20px;text-align:center;text-transform:uppercase}
     .letter-tiles{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px}
     .letter-tiles button{width:47px;height:50px;border:1px solid var(--line);border-radius:12px;background:#fff;font-size:20px;font-weight:900}
-    .choice-list{display:grid;gap:9px;margin-top:13px}
-    .choice{min-height:52px;border:1px solid var(--line);background:white;border-radius:14px;padding:11px 13px;text-align:left;font-weight:750}
+    .choice-list{display:grid;gap:12px;margin-top:16px}
+    .choice{min-height:58px;border:1px solid var(--line);background:white;border-radius:18px;padding:14px 18px;text-align:left;font-weight:800;font-size:18px;box-shadow:0 8px 18px rgba(34,65,57,.08)}
     .choice.correct{background:#def2e6;border-color:#73b891;color:#164c33}
     .choice.incorrect{background:#fde4e4;border-color:#d38a8a;color:#7c2424}
-    .score-row{display:flex;justify-content:space-between;gap:8px;color:var(--muted);font-weight:750;margin-bottom:10px}
+    .score-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px}
+    .score-chip{border:1px solid var(--line);background:#fbfdfc;border-radius:16px;padding:10px 12px;box-shadow:0 6px 16px rgba(34,65,57,.06)}
+    .score-chip small{display:block;font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+    .score-chip strong{display:block;font-size:18px;font-weight:900;color:var(--ink)}
+    .score-chip.category strong{font-size:16px;line-height:1.15}
+    .trivia-card{padding:22px;border-radius:24px;background:linear-gradient(180deg,#ffffff,#f8fbfa);border:1px solid var(--line);box-shadow:0 12px 28px rgba(34,65,57,.09);margin-bottom:2px}
+    .trivia-card .question{font-size:clamp(27px,5vw,34px);line-height:1.32;font-weight:900;letter-spacing:-.02em;color:var(--ink)}
+    .trivia-actions{display:flex;gap:10px;justify-content:space-between;align-items:stretch;flex-wrap:wrap;margin-top:20px}
+    .trivia-actions .left{display:flex;gap:10px;flex:1 1 220px}
+    .trivia-actions .left button,.trivia-actions .next-btn{flex:1 1 0;min-height:52px;border:1px solid var(--line);background:white;border-radius:16px;padding:12px 16px;font-weight:850;box-shadow:0 6px 16px rgba(34,65,57,.08)}
+    .trivia-actions .next-btn{max-width:150px}
 
     /* Crossword */
     .crossword-wrap{display:flex;flex-direction:column;gap:14px}
@@ -236,6 +250,7 @@
       <select id="playDifficulty" aria-label="Difficulty">
         <option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option>
       </select>
+      <div id="toolbarExtra" class="tool-inline"></div>
       <button class="primary-btn" id="newBtn">New puzzle</button>
       <button class="small-btn" id="hintBtn">Hint</button>
       <button class="small-btn" id="checkBtn">Check</button>
@@ -524,17 +539,26 @@
   }
 
   function showHome(){
-    $("#playScreen").classList.remove("active");$("#homeScreen").classList.add("active");currentGame=null;currentState=null;boardView=null;window.scrollTo(0,0);
+    $("#playScreen").classList.remove("active");$("#homeScreen").classList.add("active");currentGame=null;currentState=null;boardView=null;$("#toolbarExtra").innerHTML="";$("#hintBtn").style.display="";$("#checkBtn").style.display="";window.scrollTo(0,0);
   }
   function openGame(id){
     currentGame=id;$("#homeScreen").classList.remove("active");$("#playScreen").classList.add("active");
     const g=GAMES.find(x=>x.id===id);$("#gameTitle").textContent=g.title;$("#gameSubtitle").textContent=g.desc;
     $("#playDifficulty").value=localStorage.getItem(STORAGE.difficulty)||"medium";updateToolbarForGame();newPuzzle();window.scrollTo(0,0);
   }
+  function renderTriviaToolbar(){
+    if(currentGame!=="trivia")return $("#toolbarExtra").innerHTML="";
+    const settings=loadJSON("puzzleTriviaSettings",{category:"",difficulty:getDifficulty()});
+    $("#toolbarExtra").innerHTML=`<label class="toolbar-select"><span>Category</span><select id="triviaTopCategory" aria-label="Category">${Object.entries(TRIVIA_CATEGORIES).map(([n,v])=>`<option value="${v}" ${settings.category===v?"selected":""}>${n}</option>`).join("")}</select></label>`;
+    $("#triviaTopCategory")?.addEventListener("change",e=>{const next={...settings,category:e.target.value,difficulty:getDifficulty()};saveJSON("puzzleTriviaSettings",next);if(currentGame==="trivia")newPuzzle();});
+  }
   function updateToolbarForGame(){
     const isScramble=currentGame==="scramble";
+    const isTrivia=currentGame==="trivia";
     $("#newBtn").style.display=isScramble?"none":"";
-    $("#checkBtn").style.display=isScramble?"none":"";
+    $("#checkBtn").style.display=(isScramble||isTrivia)?"none":"";
+    $("#hintBtn").style.display=isTrivia?"none":"";
+    renderTriviaToolbar();
   }
   function makeBoardShell(inner,viewportClass=""){
     return `<div class="board-stage"><div class="board-viewport ${viewportClass}" id="boardViewport"><div class="board-surface" id="boardSurface">${inner}</div></div></div>`;
@@ -905,7 +929,7 @@
   function markTriviaSeen(question){const seen=loadJSON(STORAGE.triviaSeen,[]),key=hashString(question);if(!seen.includes(key)){seen.push(key);saveJSON(STORAGE.triviaSeen,seen.slice(-2000));}}
   async function fetchTriviaBatch(category,difficulty){const token=await getTriviaToken();const params=new URLSearchParams({amount:"10",type:"multiple",encode:"url3986"});if(category)params.set("category",category);if(difficulty)params.set("difficulty",difficulty);if(token)params.set("token",token);const r=await fetch("https://opentdb.com/api.php?"+params);if(!r.ok)throw new Error("Trivia service unavailable");const d=await r.json();if(d.response_code===4&&token){await fetch(`https://opentdb.com/api_token.php?command=reset&token=${token}`);throw new Error("Trivia token reset; try again");}if(d.response_code!==0)throw new Error("No trivia available for that selection");const all=d.results.map(x=>({category:decodeURIComponent(x.category),difficulty:x.difficulty,question:decodeURIComponent(x.question),correct:decodeURIComponent(x.correct_answer),incorrect:x.incorrect_answers.map(decodeURIComponent)}));const seen=triviaSeenSet(),fresh=all.filter(x=>!seen.has(hashString(x.question)));return fresh.length?fresh:all;}
   async function buildTrivia(seed){showLoading("Loading a fresh trivia round…");const score=currentState?.score||0,streak=currentState?.streak||0;const settings=loadJSON("puzzleTriviaSettings",{category:"",difficulty:getDifficulty()});let queue=[];try{queue=await fetchTriviaBatch(settings.category,settings.difficulty);}catch(e){console.warn(e);queue=shuffle(FALLBACK_TRIVIA.filter(x=>settings.difficulty?x.difficulty===settings.difficulty:true),mulberry32(seed));if(!queue.length)queue=shuffle(FALLBACK_TRIVIA,mulberry32(seed));toast("Using built-in trivia for this round");}currentState={queue,index:0,score,streak,answered:false,settings};renderTrivia();}
-  function renderTrivia(){const st=currentState,q=st.queue[st.index];if(!q){return newPuzzle();}markTriviaSeen(q.question);const rng=mulberry32(hashString(q.question)),choices=shuffle([q.correct,...q.incorrect],rng);st.current=q;st.choices=choices;st.answered=false;$("#gameArea").innerHTML=`<div class="score-row"><span>Score: ${st.score}</span><span>Streak: ${st.streak}</span><span>${q.category}</span></div><div class="prompt-card"><div class="question">${q.question}</div></div><div class="choice-list">${choices.map((c,i)=>`<button class="choice" data-i="${i}">${c}</button>`).join("")}</div>`;$("#extraControls").innerHTML=`<div class="control-grid"><select id="triviaCategory" aria-label="Trivia category">${Object.entries(TRIVIA_CATEGORIES).map(([n,v])=>`<option value="${v}" ${st.settings.category===v?"selected":""}>${n}</option>`).join("")}</select><button id="triviaNext">Next</button></div>`;$$(`.choice`).forEach(b=>b.addEventListener("click",()=>answerTrivia(b)));$("#triviaNext").addEventListener("click",nextTrivia);$("#triviaCategory").addEventListener("change",e=>{st.settings.category=e.target.value;st.settings.difficulty=getDifficulty();saveJSON("puzzleTriviaSettings",st.settings);newPuzzle();});}
+  function renderTrivia(){const st=currentState,q=st.queue[st.index];if(!q){return newPuzzle();}updateToolbarForGame();markTriviaSeen(q.question);const rng=mulberry32(hashString(q.question)),choices=shuffle([q.correct,...q.incorrect],rng);st.current=q;st.choices=choices;st.answered=false;$("#gameArea").innerHTML=`<div class="score-row"><div class="score-chip"><small>Score</small><strong>${st.score}</strong></div><div class="score-chip"><small>Streak</small><strong>${st.streak}</strong></div><div class="score-chip category"><small>Category</small><strong>${q.category}</strong></div></div><div class="trivia-card"><div class="question">${q.question}</div></div><div class="choice-list">${choices.map((c,i)=>`<button class="choice" data-i="${i}">${c}</button>`).join("")}</div>`;$("#extraControls").innerHTML=`<div class="trivia-actions"><div class="left"><button id="triviaHintBtn">Hint</button><button id="triviaCheckBtn">Check</button></div><button id="triviaNext" class="next-btn">Next</button></div>`;$$(`.choice`).forEach(b=>b.addEventListener("click",()=>answerTrivia(b)));$("#triviaNext").addEventListener("click",nextTrivia);$("#triviaHintBtn").addEventListener("click",triviaHint);$("#triviaCheckBtn").addEventListener("click",triviaCheck);}
   function answerTrivia(btn){const st=currentState;if(st.answered)return;st.answered=true;const answer=btn.textContent,correct=st.current.correct;$$(`.choice`).forEach(b=>{b.disabled=true;if(b.textContent===correct)b.classList.add("correct");});if(answer===correct){st.score++;st.streak++;setStatus("Correct!","good");recordCompleted();}else{btn.classList.add("incorrect");st.streak=0;setStatus(`The answer is ${correct}.`,"bad");}}
   function nextTrivia(){const st=currentState;if(!st.answered)return toast("Choose an answer first");st.index++;if(st.index>=st.queue.length){const score=st.score,streak=st.streak;buildTrivia(uniqueSeed("trivia")).then(()=>{currentState.score=score;currentState.streak=streak;renderTrivia();});}else renderTrivia();setStatus("");}
   function triviaHint(){const st=currentState;if(st.answered)return;const wrong=$$(".choice").filter(b=>b.textContent!==st.current.correct&&!b.disabled);if(wrong.length){const choice=pick(wrong);choice.disabled=true;choice.style.opacity=.35;setStatus("One incorrect choice removed.");}}
