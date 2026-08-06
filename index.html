@@ -24,7 +24,7 @@
       --shadow:0 10px 30px rgba(34,65,57,.10);
     }
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-    html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overscroll-behavior-y:none}
     body{padding-bottom:max(24px,env(safe-area-inset-bottom))}
     button,input,select{font:inherit}
     button{cursor:pointer}
@@ -677,6 +677,10 @@
   let boardView = null;
   let toastTimer = null;
   let headerFlyTimer = null;
+  let lastPageScrollY = 0;
+  let headerPullStartY = null;
+  let headerPullStartX = null;
+  let headerGestureLockUntil = 0;
 
   function loadJSON(key, fallback){
     try{return JSON.parse(localStorage.getItem(key)) ?? fallback;}catch{return fallback;}
@@ -705,6 +709,18 @@
     return seed;
   }
   function updateStats(){const stats=loadJSON(STORAGE.stats,{played:0,completed:0});const el=$("#playedCount");if(el)el.textContent=stats.played||0;}
+
+  function revealPlayHeader(){
+    if(!document.body.classList.contains("play-mode"))return;
+    clearTimeout(headerFlyTimer);
+    document.body.classList.remove("header-collapsed");
+    headerGestureLockUntil=Date.now()+450;
+  }
+  function collapsePlayHeader(){
+    if(!document.body.classList.contains("play-mode"))return;
+    if(Date.now()<headerGestureLockUntil)return;
+    document.body.classList.add("header-collapsed");
+  }
 
   function renderHome(){
     $("#gameGrid").innerHTML=GAMES.map(g=>`<button class="game-card" data-game="${g.id}"><div><div class="game-icon">${g.icon}</div><h4>${g.title}</h4><p>${g.desc}</p></div><div class="game-meta"><span>${g.meta}</span><span>›</span></div></button>`).join("");
@@ -737,7 +753,7 @@
     updateToolbarForGame();
     newPuzzle();
     window.scrollTo(0,0);
-    headerFlyTimer=setTimeout(()=>document.body.classList.add("header-collapsed"),900);
+    headerFlyTimer=setTimeout(collapsePlayHeader,900);
   }
   function renderTriviaToolbar(){
     if(currentGame!=="trivia")return $("#toolbarExtra").innerHTML="";
@@ -1154,11 +1170,58 @@
   window.addEventListener("popstate",()=>{if($("#playScreen").classList.contains("active"))showHome();});
   window.addEventListener("keydown",e=>{if(currentGame==="maze"){const map={ArrowUp:0,ArrowRight:1,ArrowDown:2,ArrowLeft:3};if(e.key in map){e.preventDefault();mazeMove(map[e.key]);}}});
   if("serviceWorker" in navigator)window.addEventListener("load",()=>{
-    navigator.serviceWorker.register("./sw.js?v=20260805-layout7",{updateViaCache:"none"}).then(reg=>reg.update()).catch(()=>{});
-    navigator.serviceWorker.addEventListener("controllerchange",()=>{if(!sessionStorage.getItem("puzzler-layout7-reloaded")){sessionStorage.setItem("puzzler-layout7-reloaded","1");location.reload();}});
+    navigator.serviceWorker.register("./sw.js?v=20260806-header-reveal",{updateViaCache:"none"}).then(reg=>reg.update()).catch(()=>{});
+    navigator.serviceWorker.addEventListener("controllerchange",()=>{if(!sessionStorage.getItem("puzzler-header-reveal-reloaded")){sessionStorage.setItem("puzzler-header-reveal-reloaded","1");location.reload();}});
   });
 
   window.addEventListener("resize",()=>{if($("#boardViewport"))setTimeout(initBoardViewport,0);});
+
+  // On puzzle pages, scrolling upward reveals the Puzzler header again.
+  // A downward pull at the very top reveals it before the browser can refresh.
+  window.addEventListener("scroll",()=>{
+    const y=Math.max(0,window.scrollY||0);
+    if(!document.body.classList.contains("play-mode")){
+      lastPageScrollY=y;
+      return;
+    }
+    const delta=y-lastPageScrollY;
+    if(Date.now()>=headerGestureLockUntil){
+      if(delta<-7)revealPlayHeader();
+      else if(delta>9&&y>54)collapsePlayHeader();
+    }
+    lastPageScrollY=y;
+  },{passive:true});
+
+  document.addEventListener("touchstart",e=>{
+    headerPullStartY=null;
+    headerPullStartX=null;
+    if(!document.body.classList.contains("play-mode")||!document.body.classList.contains("header-collapsed"))return;
+    if((window.scrollY||0)>2||e.touches.length!==1)return;
+    const t=e.touches[0];
+    if(t.clientY>190)return;
+    headerPullStartY=t.clientY;
+    headerPullStartX=t.clientX;
+  },{passive:true});
+
+  document.addEventListener("touchmove",e=>{
+    if(headerPullStartY==null||e.touches.length!==1)return;
+    const t=e.touches[0];
+    const dy=t.clientY-headerPullStartY;
+    const dx=t.clientX-headerPullStartX;
+    if(dy>16&&Math.abs(dy)>Math.abs(dx)*1.15){
+      e.preventDefault();
+      revealPlayHeader();
+      headerPullStartY=null;
+      headerPullStartX=null;
+    }else if(dy<-10||Math.abs(dx)>36){
+      headerPullStartY=null;
+      headerPullStartX=null;
+    }
+  },{passive:false});
+
+  document.addEventListener("touchend",()=>{headerPullStartY=null;headerPullStartX=null;},{passive:true});
+  document.addEventListener("touchcancel",()=>{headerPullStartY=null;headerPullStartX=null;},{passive:true});
+
   renderHome();updateStats();
 })();
 </script>
