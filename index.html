@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
-  <meta name="theme-color" content="#315f56" />
+  <meta name="theme-color" content="#161c19" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Puzzler</title>
   <link rel="manifest" href="./manifest.json" />
   <style>
@@ -379,6 +379,234 @@
       body.play-mode .tool-inline{min-width:118px}
       body[data-game="wordsearch"] .word-list{grid-template-columns:repeat(3,minmax(0,1fr))}
     }
+
+  
+
+    /* ===== DARK OMBRÉ THEME ===== */
+    :root{
+      --bg:#101411;
+      --card:#1b2420;
+      --ink:#f6f1ea;
+      --muted:#b9b0aa;
+      --line:rgba(238,225,216,.16);
+      --accent:#86a67f;
+      --accent-dark:#d8c7ad;
+      --accent-soft:#263a32;
+      --gold:#d6aa55;
+      --danger:#ff9a9a;
+      --good:#83d7a5;
+      --shadow:0 14px 34px rgba(0,0,0,.34);
+      color-scheme:dark;
+    }
+    html{
+      background:#101411;
+    }
+    html,body{
+      color:var(--ink);
+      background:
+        radial-gradient(circle at 12% 3%,rgba(105,41,62,.38),transparent 34%),
+        radial-gradient(circle at 91% 18%,rgba(42,91,72,.34),transparent 38%),
+        linear-gradient(155deg,#111713 0%,#17231e 42%,#2a1720 100%);
+      background-attachment:fixed;
+    }
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      z-index:-1;
+      pointer-events:none;
+      background:linear-gradient(120deg,rgba(255,255,255,.025),transparent 34%,rgba(121,56,74,.08));
+    }
+    .topbar{
+      background:linear-gradient(110deg,rgba(20,29,25,.95),rgba(48,24,34,.93));
+      border-bottom-color:rgba(231,213,202,.16);
+      box-shadow:0 8px 24px rgba(0,0,0,.22);
+    }
+    .brand h1,.section-title h3,.play-title h2{color:#fff8f1}
+    .brand small,.section-title span,.play-title p,.footer-note{color:var(--muted)}
+    .footer-note a,.game-meta{color:#d8bb83}
+    .logo{box-shadow:0 0 0 2px rgba(230,207,187,.12),0 7px 20px rgba(0,0,0,.42)}
+
+    .game-card{
+      color:var(--ink);
+      border-color:rgba(233,215,204,.14);
+      background:
+        linear-gradient(145deg,rgba(35,51,43,.96),rgba(48,25,35,.96));
+      box-shadow:0 12px 25px rgba(0,0,0,.26),inset 0 1px 0 rgba(255,255,255,.045);
+    }
+    .game-card h4{color:#fff7ef}
+    .game-card p{color:#c8bdb6}
+    .game-card:active{background:linear-gradient(145deg,#32483d,#442431)}
+
+    .icon-btn,.small-btn,.soft-btn,.danger-btn,
+    .shared-actions>button,.shared-actions #bottomGameActions button,
+    .control-grid button,.maze-pad button,.letter-tiles button,
+    .alpha-pad button,.choice,.logic-cell{
+      color:var(--ink);
+      border-color:rgba(235,218,207,.16);
+      background:linear-gradient(180deg,#29342f,#202824);
+      box-shadow:0 6px 14px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.04);
+    }
+    .icon-btn:active,.small-btn:active,.control-grid button:active,.choice:active{
+      background:#35483f;
+    }
+    .primary-btn,#newBtn,body.play-mode #bottomGameActions button{
+      color:#fff;
+      border-color:#7c965f;
+      background:linear-gradient(135deg,#6d8b66,#735066);
+      box-shadow:0 7px 16px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.14);
+    }
+    .primary-btn:active,#newBtn:active{background:linear-gradient(135deg,#587654,#603e52)}
+    .danger-btn{color:#ffb0b0;background:linear-gradient(180deg,#44272d,#342126)}
+
+    .compact-field,.toolbar-select,
+    body.play-mode .compact-field,body.play-mode .toolbar-select{
+      border-color:rgba(231,213,203,.16);
+      background:linear-gradient(180deg,rgba(42,53,48,.98),rgba(29,37,33,.98));
+      box-shadow:0 5px 14px rgba(0,0,0,.22);
+    }
+    .compact-field span,.toolbar-select span,
+    body.play-mode .compact-field span,body.play-mode .toolbar-select span{color:#bdb1a9}
+    .compact-field select,.toolbar-select select,.tool-row select,
+    body.play-mode .compact-field select,body.play-mode .toolbar-select select{
+      color:#fff5ed!important;
+    }
+    select option{background:#202924;color:#fff5ed}
+
+    body.play-mode{background:transparent}
+    body.play-mode .game-panel,.game-panel,
+    body[data-game="wordsearch"] .game-panel,
+    body[data-game="maze"] .game-panel,
+    body[data-game="trivia"] .game-panel,
+    body[data-game="sudoku"] .game-panel,
+    body[data-game="crossword"] .game-panel,
+    body[data-game="nonogram"] .game-panel,
+    body[data-game="scramble"] .game-panel,
+    body[data-game="cryptogram"] .game-panel,
+    body[data-game="logic"] .game-panel,
+    body[data-game="riddle"] .game-panel{
+      color:var(--ink);
+      border-color:rgba(235,217,207,.15);
+      background:
+        linear-gradient(155deg,rgba(29,41,35,.98),rgba(43,23,32,.97));
+      box-shadow:0 14px 30px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.035);
+    }
+    body[data-game] .game-panel{border-top-color:var(--game-accent,var(--accent))}
+
+    .helper-card,body.play-mode .helper-card,
+    .theme-card,body.play-mode .theme-card,
+    body[data-game="wordsearch"] .theme-card{
+      color:var(--ink);
+      border-color:rgba(226,207,195,.15);
+      background:linear-gradient(135deg,rgba(45,61,52,.96),rgba(53,31,40,.94));
+      box-shadow:0 6px 14px rgba(0,0,0,.18);
+    }
+    .helper-card strong,.theme-name,.logic-matrix h4,.clue-box h4{color:#ead8bd}
+    .theme-label,.word-bank-head{color:#c2b6ae}
+    .direction-line,body.play-mode .direction-line,.riddle-story,.riddle-question{color:#eee6df}
+
+    .board-viewport,body.play-mode .board-viewport,
+    body[data-game="wordsearch"] .board-viewport,
+    body[data-game="maze"] .board-viewport{
+      border-color:rgba(213,192,175,.34);
+      background:#e9e2d8;
+      box-shadow:inset 0 0 0 4px rgba(65,50,47,.12),0 9px 21px rgba(0,0,0,.28);
+    }
+
+    .word-bank,body[data-game="wordsearch"] .word-bank{
+      border-color:rgba(225,207,195,.14);
+      background:linear-gradient(135deg,rgba(37,52,44,.96),rgba(46,27,35,.96));
+      box-shadow:0 7px 16px rgba(0,0,0,.21);
+    }
+    .word-chip,body[data-game="wordsearch"] .word-chip{
+      color:#f5ede5;
+      border-color:rgba(231,213,202,.14);
+      background:linear-gradient(180deg,#35433d,#28332e);
+      box-shadow:0 3px 8px rgba(0,0,0,.2);
+    }
+    .word-chip.found{color:#b4c9bb;background:#294336;border-color:#567f65}
+    .word-cell{color:#253028;background:#f3ede5;border-color:#c9beb0}
+    .word-cell.trace{background:#e7c875;border-color:#b28d35;color:#2d2415}
+    .word-cell.found{background:#a9ceb2;border-color:#5d9670;color:#153b27}
+
+    .sudoku{border-color:#17211c;background:#17211c}
+    .sudoku-cell{color:#26312b;background:#f4eee5}
+    .sudoku-cell.fixed{color:#192720;background:#d7ded7}
+    .sudoku-cell.related{background:#e4ebe4}
+    .sudoku-cell.selected{background:#bdd5c5;outline-color:#547e69}
+    .sudoku-cell.wrong{color:#952d3c;background:#f3cdd1}
+    .control-grid button:disabled{color:#786f69;background:#2b302d;opacity:.45}
+
+    .crossword{background:#171d1a;border-color:#171d1a}
+    .cw-cell{color:#243029;background:#f4eee6}
+    .cw-cell.block{background:#171d1a}
+    .cw-cell input{color:#25312b}
+    .cw-cell.active{background:#b8d5c4}
+    .cw-cell.word-active{background:#d9e7dc}
+    .cw-cell.wrong{background:#f0c7cb}
+    .clue-box,.logic-matrix{
+      color:#eee6df;
+      border-color:rgba(228,211,200,.14);
+      background:linear-gradient(145deg,#28352f,#30222a);
+    }
+    .clue-item.active{color:#fff6ed;background:#415c4e}
+
+    .prompt-card,.trivia-card,body[data-game="trivia"] .trivia-card{
+      color:#fff5ec;
+      border-color:rgba(229,206,190,.18);
+      background:linear-gradient(145deg,#30443a,#4a2736);
+      box-shadow:0 9px 22px rgba(0,0,0,.25);
+    }
+    .prompt-card .question,.trivia-card .question,body[data-game="trivia"] .trivia-card .question{color:#fff8f1}
+    .prompt-card .big{color:#e4c78f}
+    .answer-input,input,textarea{
+      color:#fff7ef;
+      caret-color:#e7bd70;
+      border-color:rgba(230,211,199,.19);
+      background:#202a25;
+    }
+    input::placeholder,textarea::placeholder{color:#9d938d}
+    .choice,body[data-game="trivia"] .choice{
+      color:#f8f0e9;
+      border-color:rgba(230,211,199,.15);
+      background:linear-gradient(180deg,#334139,#27322d);
+    }
+    .choice.correct{color:#dff8e8;background:#28503b;border-color:#68ae82}
+    .choice.incorrect{color:#ffdcdc;background:#542c35;border-color:#bd6574}
+    .score-chip,body[data-game="trivia"] .score-chip{
+      border-color:rgba(229,211,199,.14);
+      background:linear-gradient(145deg,#32423a,#39252d);
+    }
+    .score-chip small{color:#bfb2aa}
+    .score-chip strong{color:#fff5ed}
+
+    .crypto-letter{color:#f3ece5;border-bottom-color:#d5c7bc}
+    .crypto-letter .guess{color:#e4bc78}
+    .crypto-letter .cipher{color:#b9ada6}
+    .crypto-letter.selected{background:#3f5549;outline-color:#9db398}
+    .alpha-pad button{color:#f5ede6}
+
+    .logic-corner,.logic-col,.logic-row,.nono-col-clue,.nono-row-clue{color:#efe6df}
+    .logic-cell{color:#eee6df;background:#28332e;border-color:#536159}
+    .logic-cell.x{color:#ffb1b1;background:#4b2b32}
+    .logic-cell.o{color:#b9f1cd;background:#244d37;border-color:#6dae82}
+    .logic-key{color:#b7aaa3}.logic-key b{color:#f7eee7}
+
+    .nono-grid{background:#46544d;border-color:#65736c}
+    .nono-cell{background:#eee8df}
+    .nono-cell.filled{background:#6e8b6b}
+    .nono-cell.marked::before,.nono-cell.marked::after{background:#7c7068}
+
+    .sheet{
+      color:var(--ink);
+      border:1px solid rgba(232,214,202,.16);
+      background:linear-gradient(150deg,#25332c,#432633);
+      box-shadow:0 24px 80px rgba(0,0,0,.55);
+    }
+    .sheet p{color:#d0c4bc}
+    .overlay{background:rgba(5,8,7,.72)}
+    .toast{color:#fff6ed;background:#4c2936;border:1px solid rgba(255,255,255,.12);box-shadow:0 10px 25px rgba(0,0,0,.38)}
+    .status{color:#c4b8b0}.status.good{color:#8fe0ae}.status.bad{color:#ff9da8}
 
   </style>
 </head>
@@ -1170,8 +1398,8 @@
   window.addEventListener("popstate",()=>{if($("#playScreen").classList.contains("active"))showHome();});
   window.addEventListener("keydown",e=>{if(currentGame==="maze"){const map={ArrowUp:0,ArrowRight:1,ArrowDown:2,ArrowLeft:3};if(e.key in map){e.preventDefault();mazeMove(map[e.key]);}}});
   if("serviceWorker" in navigator)window.addEventListener("load",()=>{
-    navigator.serviceWorker.register("./sw.js?v=20260806-header-reveal",{updateViaCache:"none"}).then(reg=>reg.update()).catch(()=>{});
-    navigator.serviceWorker.addEventListener("controllerchange",()=>{if(!sessionStorage.getItem("puzzler-header-reveal-reloaded")){sessionStorage.setItem("puzzler-header-reveal-reloaded","1");location.reload();}});
+    navigator.serviceWorker.register("./sw.js?v=20260806-dark-ombre",{updateViaCache:"none"}).then(reg=>reg.update()).catch(()=>{});
+    navigator.serviceWorker.addEventListener("controllerchange",()=>{if(!sessionStorage.getItem("puzzler-dark-ombre-reloaded")){sessionStorage.setItem("puzzler-dark-ombre-reloaded","1");location.reload();}});
   });
 
   window.addEventListener("resize",()=>{if($("#boardViewport"))setTimeout(initBoardViewport,0);});
