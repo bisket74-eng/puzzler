@@ -1,13 +1,15 @@
 {
   "name": "Puzzler",
   "short_name": "Puzzler",
-  "description": "Phone-friendly generated word, number, logic, maze, riddle, and trivia puzzles.",
+  "id": "./",
   "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#f4f7f5",
   "theme_color": "#315f56",
+  "description": "Phone-friendly generated puzzles, word games, logic, mazes, riddles, and trivia.",
   "icons": [
-    {"src":"./icon-192.png","sizes":"192x192","type":"image/png"},
-    {"src":"./icon-512.png","sizes":"512x512","type":"image/png"}
+    {"src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+    {"src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
   ]
 }
